@@ -45,21 +45,8 @@ export default class WordProcessor extends React.Component {
     }*/
 
     loadHTML(rawHTML) {
-        // this whole wrapping bit should be somewhere else so we don't
-        // do all this unnecessary processing
-        const parser = new DOMParser()
-        var wrappedHTML = '<div id="wrapper">' + rawHTML + '</div>';
-        var nodeTreeFull = parser.parseFromString(wrappedHTML, "text/html");
-        var nodeTree = nodeTreeFull.childNodes[0].childNodes[1]; // <html>, <body>, wrapping <div>
-
-        console.log(wrappedHTML);
-
-        this.textbox.current.innerHTML = "";
-        for (var i = 0; i < nodeTree.childNodes.length; i++) {
-            this.textbox.current.appendChild(nodeTree.childNodes[i]);
-        }
-
-        console.log("textbox", this.textbox.current.innerHTML);
+        var nodeTree = new DOMParser().parseFromString(rawHTML, "text/html");
+        console.log(nodeTree);
     }
 
     handleFiles(e) {
@@ -72,14 +59,9 @@ export default class WordProcessor extends React.Component {
             newImg.style.maxWidth = '40vw';
             newImg.style.maxHeight = '40vh';
 
-            console.log("newImg", newImg);
-            console.log(newImg.innerHTML);
-
-            var wrapper = document.getElementById('wrapper');
-
-            wrapper.appendChild(document.createElement('br'));
-            wrapper.appendChild(newImg);
-            wrapper.appendChild(document.createElement('br'));
+            this.textbox.current.appendChild(document.createElement('br'));
+            this.textbox.current.appendChild(newImg);
+            this.textbox.current.appendChild(document.createElement('br'));
         }).bind(this);
 
         reader.readAsDataURL(e.target.files[e.target.files.length-1]);
@@ -87,13 +69,7 @@ export default class WordProcessor extends React.Component {
 
     // returns a string containing the raw HTML of the textbox
     exportHTML() {
-        var html = this.textbox.current.innerHTML;
-        var wrapperCandidate = html.substring(0, 18);
-        if (wrapperCandidate !== '<div id="wrapper">') {
-            html = '<div id="wrapper">' + html + '</div>';
-        }
-
-        return html;
+        return this.textbox.current.innerHTML;
     }
 
     // returns a list of strings containing all text contents in the word processor

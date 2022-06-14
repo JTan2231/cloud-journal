@@ -1,14 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import MainPage from './pages/main.jsx';
-import {
-    BrowserRouter as Router,
-    Switch,
-    Route,
-    Link
-} from 'react-router-dom';
 
+//document.body.style.height = '100vh';
+//document.body.style.margin = '0';
+//document.getElementById('root').style.height = '100%';
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
+console.log(root);
+
 
 root.render(
   <React.StrictMode>
