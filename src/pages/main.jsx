@@ -11,6 +11,7 @@ export default class MainPage extends React.Component {
             entriesLoaded: 0,
             userSelection: { userid: null, username: null },
             entrySelection: null,
+            collectionSelection: { collectionid: null, name: null },
             entryList: [],
         };
 
@@ -32,11 +33,19 @@ export default class MainPage extends React.Component {
         this.passwordLogin = React.createRef();
         this.loginButton = React.createRef();
         this.loginErrorText = React.createRef();
+
+        this.collectionNameInput = React.createRef();
+        this.collectionButton = React.createRef();
+        this.existingCollectionError = React.createRef();
+
+        this.collectionEntryButton = React.createRef();
+        this.entryListDropdown = React.createRef();
     }
 
     componentDidMount() {
         this.userButton.current.disabled = true;
         this.loginButton.current.disabled = true;
+        this.collectionButton.current.disabled = true;
 
         //this.fetchUsers();
     }
@@ -46,6 +55,89 @@ export default class MainPage extends React.Component {
         this.passwordLogin.current.value = "";
         this.loginButton.current.disabled = false;
         this.fetchEntries(userid);
+        this.fetchCollections(userid);
+    }
+
+    loadEntryListHTML(entryList) {
+        var entryListHTML = [];
+        const func = this.entryClick.bind(this);
+
+        if (entryList.length > 0) {
+            for (const entry of entryList) {
+                entryListHTML.push((
+                    <tr>
+                        <td style={{ border: '1px solid black' }} 
+                            onClick={ () => func(entry.id) }>
+                            { entry.title }
+                        </td>
+                    </tr>
+                ));
+            }
+        }
+        else {
+            this.wordProcessor.current.loadHTML('Edit me');
+
+            var optionsList = [];
+            for (var i = 0; i < this.state.entryList.length; i++) {
+                const entry = this.state.entryList[i];
+                optionsList.push(( 
+                    <option value={ entry.id }>{ entry.title }</option>
+                ));
+            }
+
+            entryListHTML.push((
+                <tr>
+                    <td style={{ border: '1px solid black' }}>
+                        <select ref={ this.entryListDropdown } style={{ width: '100%' }}>
+                            { optionsList }
+                        </select>
+                    </td>
+                    <td>
+                        <button onClick={ this.createCollectionEntry.bind(this) }
+                                ref={ this.collectionEntryButton }>
+                            Add Entry to Collection
+                        </button>
+                    </td>
+                </tr>
+            ));
+        }
+
+        const createEntryFunc = this.createEntry.bind(this);
+        entryListHTML.push((
+            <tr>
+                <td>
+                    <input type="text" ref={ this.newEntryName } defaultValue="Untitled" />
+                </td>
+                <td style={{ border: '1px solid black' }}
+                    onClick={ () => createEntryFunc(this.state.userSelection.userid) }>
+                    <button>Create Entry</button>
+                </td>
+            </tr>
+        ));
+
+        this.setState({ entryListHTML: entryListHTML });
+    }
+
+    createCollectionEntry() {
+        const selCol = this.state.collectionSelection;
+        fetch(config.API_ROOT + 'collectionentries/', {
+            method: 'POST',
+            body: JSON.stringify({
+                collection_id: selCol.collectionid,
+                entry_id: this.entryListDropdown.current.value,
+                user_id: this.state.userSelection.userid
+            }),
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(res => res.json()).then(res => {
+            if (res.errors) {
+                alert(res.errors);
+            }
+            else {
+                this.collectionClick(selCol.collectionid, selCol.name);
+            }
+        });
     }
 
     fetchEntries(userid) {
@@ -55,16 +147,37 @@ export default class MainPage extends React.Component {
                 'Content-Type': 'application/json',
             }
         }).then(res => res.json()).then(res => {
-            var entryList = [];
-            const func = this.entryClick.bind(this);
+            console.log('fetchEntries', res);
+            this.setState({ entryList: res });
+        });
+    }
+
+    fetchCollections(userid) {
+        fetch(config.API_ROOT + 'collections/' + '?user_id=' + userid, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(res => res.json()).then(res => {
+            var collectionList = [];
+            const func = this.collectionClick.bind(this);
+
+            collectionList.push((
+                <tr>
+                    <td style={{ border: '1px solid black' }} 
+                        onClick={ () => func(-1) }>
+                        No collection
+                    </td>
+                </tr>
+            ));
 
             if (res.length > 0) {
-                for (const entry of res) {
-                    entryList.push((
+                for (const collection of res) {
+                    collectionList.push((
                         <tr>
                             <td style={{ border: '1px solid black' }} 
-                                onClick={ () => func(entry.id) }>
-                                { entry.title }
+                                onClick={ () => func(collection.collection_id, collection.name) }>
+                                { collection.name }
                             </td>
                         </tr>
                     ));
@@ -74,19 +187,19 @@ export default class MainPage extends React.Component {
                 this.wordProcessor.current.loadHTML('Edit me');
             }
 
-            entryList.push((
+            collectionList.push((
                 <tr>
                     <td>
-                        <input type="text" ref={ this.newEntryName } defaultValue="Untitled" />
+                        <input type="text" ref={ this.collectionNameInput } defaultValue="Untitled" />
                     </td>
                     <td style={{ border: '1px solid black' }}
-                        onClick={ () => this.createEntry.bind(this)(userid) }>
-                        <button>Create Entry</button>
+                        onClick={ this.createCollection.bind(this) }>
+                        <button>Create Collection</button>
                     </td>
                 </tr>
             ));
 
-            this.setState({ entryList: entryList });
+            this.setState({ collectionList: collectionList });
         });
     }
 
@@ -116,6 +229,46 @@ export default class MainPage extends React.Component {
             this.wordProcessor.current.loadHTML(res.raw_html);
             this.setState({ entrySelection: res.title });
         });
+    }
+
+    collectionClick(collectionid, name) {
+        if (collectionid === -1) {
+            this.loadEntryListHTML(this.state.entryList);
+            this.setState({
+                collectionSelection: {
+                    collectionid: collectionid,
+                    name: 'No collection'
+                }
+            });
+        }
+        else {
+            this.setState({
+                collectionSelection: {
+                    collectionid: collectionid,
+                    name: name
+                }
+            });
+
+            fetch(config.API_ROOT + 'collectionentries/?collection_id=' + collectionid, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).then(res => res.json()).then(res => {
+                console.log(res);
+
+                const entryList = this.state.entryList;
+                var entryListDisplay = [];
+                var entryIds = [];
+                for (const collectionEntry of res) {
+                    entryIds.push(collectionEntry.id);
+                }
+
+                entryListDisplay = entryList.filter(entry => entryIds.includes(entry.id));
+                console.log('display', entryListDisplay);
+                this.loadEntryListHTML(entryListDisplay);
+            });
+        }
     }
 
     createUser() {
@@ -228,6 +381,7 @@ export default class MainPage extends React.Component {
                 } });
 
                 this.fetchEntries(res.user_id);
+                this.fetchCollections(res.user_id);
             }
             else if (res.errors) {
                 this.loginErrorText.current.textContent = res.errors;
@@ -256,6 +410,36 @@ export default class MainPage extends React.Component {
         if (e.key === 'Enter' && !this.userButton.current.disabled) {
             this.createUser();
         }
+    }
+
+    createCollectionInput(e) {
+        if (this.collectionNameInput.current.value !== '') {
+            this.collectionButton.current.disabled = false;
+        }
+        else {
+            this.collectionButton.current.disabled = true;
+        }
+    }
+
+    createCollection() {
+        fetch(config.API_ROOT + 'collections/', {
+            method: 'POST',
+            body: JSON.stringify({
+                name: this.collectionNameInput.current.value,
+                user_id: this.state.userSelection.userid
+            }),
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(res => res.json()).then(res => {
+            if (res.errors) {
+                this.existingCollectionError.current.textContent = "Error: " + res.errors;
+            }
+            else {
+                this.existingCollectionError.current.textContent = "";
+                this.fetchCollections(this.state.userSelection.userid);
+            }
+        });
     }
 
     render() {
@@ -314,6 +498,22 @@ export default class MainPage extends React.Component {
                 <div>
                     Selected user: { this.state.userSelection.username }
                 </div>
+
+                <table style={{ borderCollapse: 'collapse' }}>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <b>Collections</b>
+                            </td>
+                        </tr>
+                        { this.state.collectionList }
+                    </tbody>
+                </table>
+
+                <div>
+                    Selection collection: { this.state.collectionSelection.name }
+                </div>
+
                 <table style={{ borderCollapse: 'collapse' }}>
                     <tbody>
                         <tr>
@@ -321,7 +521,7 @@ export default class MainPage extends React.Component {
                                 <b>Entries</b>
                             </td>
                         </tr>
-                        { this.state.entryList }
+                        { this.state.entryListHTML }
                     </tbody>
                 </table>
                 <br />
@@ -335,6 +535,19 @@ export default class MainPage extends React.Component {
                 </button>
 
                 <br />
+
+                <h1>
+                    Testing
+                </h1>
+                <div id="testing_div">
+                    <input ref={ this.collectionNameInput } onInput={ this.createCollectionInput.bind(this) } type="text" maxlength="50" placeholder="collection name" />
+                    <button ref={ this.collectionButton } onClick={ this.createCollection.bind(this) }>
+                        Create collection
+                    </button>
+                    <br />
+                    <div ref={ this.existingCollectionError }>
+                    </div>
+                </div>
             </div>
         );
     }
