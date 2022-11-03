@@ -2,17 +2,30 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import MainPage from './pages/main.jsx';
 import {
-    BrowserRouter as Router,
-    Switch,
+    createBrowserRouter,
+    RouterProvider,
     Route,
-    Link
 } from 'react-router-dom';
+
+import LoginPage from './routes/login.jsx';
+import HomePage from './routes/home.jsx';
+
+const router = createBrowserRouter([
+    {
+        path: "/",
+        element: <LoginPage />,
+    },
+    {
+        path: "/home/",
+        element: <HomePage />,
+    },
+]);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
   <React.StrictMode>
-    <MainPage />
+    <RouterProvider router={router} />
   </React.StrictMode>
 );
 

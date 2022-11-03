@@ -52,14 +52,10 @@ export default class WordProcessor extends React.Component {
         var nodeTreeFull = parser.parseFromString(wrappedHTML, "text/html");
         var nodeTree = nodeTreeFull.childNodes[0].childNodes[1]; // <html>, <body>, wrapping <div>
 
-        console.log(wrappedHTML);
-
         this.textbox.current.innerHTML = "";
         for (var i = 0; i < nodeTree.childNodes.length; i++) {
             this.textbox.current.appendChild(nodeTree.childNodes[i]);
         }
-
-        console.log("textbox", this.textbox.current.innerHTML);
     }
 
     handleFiles(e) {
@@ -71,9 +67,6 @@ export default class WordProcessor extends React.Component {
 
             newImg.style.maxWidth = '40vw';
             newImg.style.maxHeight = '40vh';
-
-            console.log("newImg", newImg);
-            console.log(newImg.innerHTML);
 
             var wrapper = document.getElementById('wrapper');
 

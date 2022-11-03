@@ -1,1 +1,1 @@
-export const API_ROOT = 'http://127.0.0.1:8000/';
+export const API_ROOT = 'http://cloudnote-dev.us-east-1.elasticbeanstalk.com/';
