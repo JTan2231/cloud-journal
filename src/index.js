@@ -8,6 +8,7 @@ import {
 
 import LoginPage from './routes/login.jsx';
 import HomePage from './routes/home.jsx';
+import Editor from './routes/editor.jsx';
 
 const router = createBrowserRouter([
     {
@@ -16,7 +17,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/home/",
-        element: <HomePage />,
+        element: <Editor />,
     },
 ]);
 

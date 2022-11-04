@@ -20,30 +20,6 @@ export default class WordProcessor extends React.Component {
         this.currentSelection = newSelection;
     }
 
-    /*loadPreview() {
-        this.preview.current.innerHTML = "";
-
-        var children = this.textbox.current.childNodes;
-        var contents = [];
-
-        var tnode;
-        for (var i = 0; i < children.length; i++) {
-            var text = children[i].textContent;
-
-            if (text === '') {
-                this.preview.current.appendChild(document.createElement('br'));
-            }
-            else {
-                tnode = document.createElement('div');
-                tnode.textContent = text;
-                this.preview.current.appendChild(tnode);
-            }
-        }
-
-        this.setState({ currentSelection: window.getSelection() });
-        this.currentSelection = window.getSelection();
-    }*/
-
     loadHTML(rawHTML) {
         // this whole wrapping bit should be somewhere else so we don't
         // do all this unnecessary processing
@@ -102,7 +78,8 @@ export default class WordProcessor extends React.Component {
 
     render() {
         const outerStyle = {
-            margin: '20px',
+            border: '1px solid black',
+            margin: '0px 20px 20px 0px',
             height: '90%'
         };
 
