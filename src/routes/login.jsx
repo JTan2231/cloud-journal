@@ -1,8 +1,19 @@
 import * as config from '../config.js';
 import React from 'react';
-import { Navigate } from 'react-router-dom';
 
-export default class LoginPage extends React.Component {
+import {
+    useLocation,
+    Navigate,
+} from 'react-router-dom';
+
+function locationHookWrapper(component) {
+    return function WrappedComponent(props) {
+        const loc = useLocation();
+        return <LoginPage {...props} location={ loc } />;
+    }
+}
+
+class LoginPage extends React.Component {
     constructor(props) {
         super(props);
 
@@ -173,3 +184,5 @@ export default class LoginPage extends React.Component {
         );
     }
 }
+
+export default locationHookWrapper(LoginPage);
