@@ -16,6 +16,14 @@ export default class WordProcessor extends React.Component {
         this.preview = React.createRef();
     }
 
+    componentDidMount() {
+        this.focusTextbox();
+    }
+
+    focusTextbox() {
+        this.textbox.current.focus();
+    }
+
     updateCurrentSelection(newSelection) {
         this.currentSelection = newSelection;
     }
@@ -78,24 +86,31 @@ export default class WordProcessor extends React.Component {
 
     render() {
         const outerStyle = {
-            border: '1px solid black',
-            margin: '0px 20px 20px 0px',
-            height: '90%'
+            position: 'relative',
+            zIndex: '0',
+            display: 'flex',
+            backgroundColor: 'black',
+            minHeight: '100vh',
+            height: '100%',
+            width: '100%',
+            cursor: 'text',
         };
 
         const innerStyle = {
-            border: '1px solid black',
+            outline: 'none',
             margin: '20px',
+            color: 'antiquewhite',
+            fontSize: '14px',
+            fontFamily: 'Courier New',
         };
 
+        document.body.style.margin = "0";
+
         return (
-            <div style={ outerStyle }>
-                <div id="textbox" ref={ this.textbox } style={ innerStyle } 
-                     contenteditable="true">
-                    Edit me
+            <div style={ outerStyle } onClick={ this.focusTextbox.bind(this) }>
+                <div id="textbox" tabIndex="0" ref={ this.textbox } style={ innerStyle } 
+                     contentEditable="true">
                 </div>
-                <input type="file" id="image" name="image"
-                       accept="image/png, image/jpeg" onChange={ this.handleFiles.bind(this) } />
             </div>
         );
     }
