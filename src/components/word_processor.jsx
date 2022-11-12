@@ -20,30 +20,6 @@ export default class WordProcessor extends React.Component {
         this.currentSelection = newSelection;
     }
 
-    /*loadPreview() {
-        this.preview.current.innerHTML = "";
-
-        var children = this.textbox.current.childNodes;
-        var contents = [];
-
-        var tnode;
-        for (var i = 0; i < children.length; i++) {
-            var text = children[i].textContent;
-
-            if (text === '') {
-                this.preview.current.appendChild(document.createElement('br'));
-            }
-            else {
-                tnode = document.createElement('div');
-                tnode.textContent = text;
-                this.preview.current.appendChild(tnode);
-            }
-        }
-
-        this.setState({ currentSelection: window.getSelection() });
-        this.currentSelection = window.getSelection();
-    }*/
-
     loadHTML(rawHTML) {
         // this whole wrapping bit should be somewhere else so we don't
         // do all this unnecessary processing
@@ -52,14 +28,10 @@ export default class WordProcessor extends React.Component {
         var nodeTreeFull = parser.parseFromString(wrappedHTML, "text/html");
         var nodeTree = nodeTreeFull.childNodes[0].childNodes[1]; // <html>, <body>, wrapping <div>
 
-        console.log(wrappedHTML);
-
         this.textbox.current.innerHTML = "";
         for (var i = 0; i < nodeTree.childNodes.length; i++) {
             this.textbox.current.appendChild(nodeTree.childNodes[i]);
         }
-
-        console.log("textbox", this.textbox.current.innerHTML);
     }
 
     handleFiles(e) {
@@ -71,9 +43,6 @@ export default class WordProcessor extends React.Component {
 
             newImg.style.maxWidth = '40vw';
             newImg.style.maxHeight = '40vh';
-
-            console.log("newImg", newImg);
-            console.log(newImg.innerHTML);
 
             var wrapper = document.getElementById('wrapper');
 
@@ -109,7 +78,8 @@ export default class WordProcessor extends React.Component {
 
     render() {
         const outerStyle = {
-            margin: '20px',
+            border: '1px solid black',
+            margin: '0px 20px 20px 0px',
             height: '90%'
         };
 
