@@ -89,7 +89,7 @@ export default class WordProcessor extends React.Component {
             position: 'relative',
             zIndex: '0',
             display: 'flex',
-            backgroundColor: 'black',
+            backgroundColor: 'rgb(16, 16, 21)',
             minHeight: '100vh',
             height: '100%',
             width: '100%',
@@ -99,7 +99,7 @@ export default class WordProcessor extends React.Component {
         const innerStyle = {
             outline: 'none',
             margin: '20px',
-            color: 'antiquewhite',
+            color: 'white',
             fontSize: '14px',
             fontFamily: 'Courier New',
         };

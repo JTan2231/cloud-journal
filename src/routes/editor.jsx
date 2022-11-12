@@ -1,20 +1,7 @@
-import * as config from '../config.js';
 import React from 'react';
 import WordProcessor from '../components/word_processor.jsx';
 
-import {
-    Navigate,
-    useLocation
-} from 'react-router-dom';
-
-function locationHookWrapper(component) {
-    return function WrappedComponent(props) {
-        const loc = useLocation();
-        return <Editor {...props} location={ loc } />;
-    }
-}
-
-class Editor extends React.Component {
+export default class Editor extends React.Component {
     constructor(props) {
         super(props);
 
@@ -40,6 +27,10 @@ class Editor extends React.Component {
     }
 
     render() {
+        const backgroundColor = 'rgba(136, 136, 136, 0.1)';
+        const menuTextColor = 'rgb(191, 187, 187)';
+        const borderColor = '1px solid rgba(188, 193, 189, 0.43)';
+
         const positionStyle = {
             zIndex: '1',
             position: 'fixed',
@@ -49,9 +40,9 @@ class Editor extends React.Component {
         };
 
         const boxStyle = {
-            color: '#faebd799',
-            backgroundColor: '#ffdb6e24',
-            border: '1px solid #f9d6a730',
+            color: menuTextColor,
+            backgroundColor: backgroundColor,
+            border: borderColor,
             borderRadius: '0.5em',
         };
 
@@ -78,7 +69,7 @@ class Editor extends React.Component {
 
         const inputStyle = Object.assign({
             padding: '0.25em 0.5em',
-            color: '#faebd799',
+            color: menuTextColor,
             fontFamily: 'Courier New',
             border: 'none',
             outline: 'none',
@@ -137,5 +128,3 @@ class Editor extends React.Component {
         );
     }
 }
-
-export default locationHookWrapper(Editor);

@@ -1,25 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import {
-    createBrowserRouter,
-    RouterProvider,
-    Route,
-} from 'react-router-dom';
 
 import Editor from './routes/editor.jsx';
-
-const router = createBrowserRouter([
-    {
-        path: "/",
-        element: <Editor />,
-    },
-]);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+      <Editor />
   </React.StrictMode>
 );
 
