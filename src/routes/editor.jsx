@@ -13,6 +13,7 @@ export default class Editor extends React.Component {
             userid: -1,
             entryid: -1,
             loginError: false,
+            lastSaved: '',
         };
 
         this.wordProcessor = React.createRef();
@@ -22,7 +23,10 @@ export default class Editor extends React.Component {
     }
 
     loginButtonClick() {
-        this.setState({ loginClicked: !this.state.loginClicked, loginError: false })
+        this.setState({ loginClicked: !this.state.loginClicked, loginError: false });
+
+        this.usernameInput.current.focus();
+        this.usernameInput.current.select();
     }
 
     userLoginAttempt() {
@@ -34,9 +38,6 @@ export default class Editor extends React.Component {
          * replace login button with logout button
          *
          */
-
-        // PLACEHOLDER CODE
-        this.setState({  });
 
         const username = this.usernameInput.current.value;
         fetch(config.API_ROOT + 'authentication/', {
@@ -94,7 +95,10 @@ export default class Editor extends React.Component {
                         'Content-Type': 'application/json',
                     }
                 }).then(res => res.json()).then(res => {
-                    this.setState({ entryid: res.entry_id });
+                    this.setState({
+                        entryid: res.entry_id,
+                        lastSaved: new Date().toLocaleString(),
+                    });
                 });
             }
             else {
@@ -107,6 +111,8 @@ export default class Editor extends React.Component {
                     headers: {
                         'Content-Type': 'application/json',
                     }
+                }).then(res => {
+                    this.setState({ lastSaved: new Date().toLocaleString() });
                 });
             }
         }
@@ -115,6 +121,9 @@ export default class Editor extends React.Component {
         }
         else {
             this.setState({ loginClicked: true });
+
+            this.usernameInput.current.focus();
+            this.usernameInput.current.select();
         }
     }
 
@@ -190,9 +199,29 @@ export default class Editor extends React.Component {
             position: 'absolute',
             top: '0',
             left: '0',
-            margin: '0.5em 1em',
+            margin: '1em',
             fontFamily: fontFamily,
             zIndex: 2,
+        };
+
+        const lastSavedStyle = {
+            position: 'absolute',
+            top: '0',
+            left: 'calc(50% - 10em)',
+            margin: '1em',
+            fontFamily: fontFamily,
+            zIndex: 2,
+            color: 'grey',
+        };
+
+        const timeStyle = {
+            position: 'absolute',
+            top: '0',
+            left: 'calc(50% - 3em)',
+            margin: '1em',
+            fontFamily: fontFamily,
+            zIndex: 2,
+            color: 'green',
         };
 
         const caretStyle = {
@@ -202,15 +231,19 @@ export default class Editor extends React.Component {
             color: 'grey',
             fontFamily: fontFamily,
             zIndex: 2,
-            margin: '2.5em 1.5em',
+            margin: '4.5em 1.5em',
         };
 
         const typingTextValue = this.state.loggedInUser.length > 0 ? 'logged in as ' + this.state.loggedInUser : 'not logged in';
+
+        console.log(this.state.lastSaved);
 
         return (
             <div>
                 <div style={ caretStyle }>></div>
                 <TypingText text={ typingTextValue } style={ typingTextStyle } />
+                <TypingText text="last saved: " style={ lastSavedStyle } />
+                <TypingText text={ this.state.lastSaved } compareAll={ true } style={ timeStyle } />
                 <WordProcessor ref={ this.wordProcessor } />
 
                 { /* NAVIGATION BOX */ }

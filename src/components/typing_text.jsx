@@ -5,15 +5,15 @@ export default class TypingText extends React.Component {
         super(props);
 
         this.frequency = 1;
-
         this.build_frequency = 8;
-
         this.mounted = false;
 
         this.url = props.url ? props.url : '';
         this.title = props.text;
 
         const style = { ...props.style };
+
+        this.compareWholeStrings = props.compareAll;
 
         this.state = {
             hovered: false,
@@ -62,7 +62,10 @@ export default class TypingText extends React.Component {
         var idx = this.state.build_index;
 
         if (text.length === 0) {
-            this.setState({ clock: 1 });
+            this.setState({
+                clock: 1,
+                built: false,
+            });
             return;
         }
 
@@ -81,6 +84,10 @@ export default class TypingText extends React.Component {
         if (clock - this.build_frequency === 0) {
             if (!this.state.built) {
                 this.buildText();
+                return;
+            }
+            else if (this.compareWholeStrings && text !== this.state.title) {
+                this.destroyText();
                 return;
             }
             else if (text.length > 0 && text[0] === 'n' && text[0] !== this.state.title[0]) {
