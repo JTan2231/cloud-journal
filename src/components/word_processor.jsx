@@ -98,7 +98,7 @@ export default class WordProcessor extends React.Component {
 
         const innerStyle = {
             outline: 'none',
-            margin: '20px',
+            margin: '3em',
             color: 'white',
             fontSize: '14px',
             fontFamily: 'Courier New',
