@@ -13,13 +13,21 @@ export default class Editor extends React.Component {
             userid: -1,
             entryid: -1,
             loginError: false,
+            newUserError: false,
             lastSaved: '',
+            searchClicked: false,
+            searchResults: [],
         };
 
         this.wordProcessor = React.createRef();
 
         this.usernameInput = React.createRef();
         this.passwordInput = React.createRef();
+
+        this.newUsernameInput = React.createRef();
+        this.newPasswordInput = React.createRef();
+
+        this.searchInput = React.createRef();
     }
 
     loginButtonClick() {
@@ -27,6 +35,13 @@ export default class Editor extends React.Component {
 
         this.usernameInput.current.focus();
         this.usernameInput.current.select();
+    }
+
+    createUserButtonClick() {
+        this.setState({ newUserClicked: !this.state.newUserClicked, newUserError: false });
+
+        this.newUsernameInput.current.focus();
+        this.newUsernameInput.current.select();
     }
 
     userLoginAttempt() {
@@ -63,6 +78,45 @@ export default class Editor extends React.Component {
         });
     }
 
+    createUserAttempt() {
+        fetch(config.API_ROOT + 'users/', {
+            method: 'POST',
+            body: JSON.stringify({
+                username: this.newUsernameInput.current.value,
+                password: this.newPasswordInput.current.value,
+            }),
+            headers: {    
+                'Content-Type': 'application/json',
+            }
+        }).then(res => res.json()).then(res => {
+            if (res.errors) {
+                this.setState({ newUserError: true });
+            }
+        });
+    }
+
+    entryQuery() {
+        const userid = this.state.userid;
+        const query = this.searchInput.current.value;
+        fetch(config.API_ROOT + 'entries/' + '?user_id=' + userid + '&query=' + encodeURIComponent(query), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(res => res.json()).then(res => {
+            var processed = [];
+
+            for (const r of res) {
+                processed.push(
+                    <div style={{ margin: '1em' }} dangerouslySetInnerHTML={{ __html: r.raw_html }}>
+                    </div>
+                );
+            }
+
+            this.setState({ searchResults: processed });
+        });
+    }
+
     loggedInTextChange(text) {
         return function() {
             this.setState({ title: text });
@@ -72,6 +126,18 @@ export default class Editor extends React.Component {
     loginKeyPress(e) {
         if (e.key === 'Enter') {
             this.userLoginAttempt();
+        }
+    }
+
+    newUserKeyPress(e) {
+        if (e.key === 'Enter') {
+            this.createUserAttempt();
+        }
+    }
+
+    searchKeyPress(e) {
+        if (e.key === 'Enter') {
+            this.entryQuery();
         }
     }
 
@@ -125,6 +191,13 @@ export default class Editor extends React.Component {
             this.usernameInput.current.focus();
             this.usernameInput.current.select();
         }
+    }
+
+    searchButtonClick() {
+        this.setState({ searchClicked: !this.state.searchClicked });
+
+        this.searchInput.current.focus();
+        this.searchInput.current.select();
     }
 
     render() {
@@ -231,15 +304,58 @@ export default class Editor extends React.Component {
             color: 'grey',
             fontFamily: fontFamily,
             zIndex: 2,
-            margin: '4.5em 1.5em',
+            margin: '4.3em 1.5em',
         };
+
+        const searchResults = {
+            position: 'absolute',
+            width: '40%',
+            height: '40%',
+            zIndex: 3,
+            backgroundColor: '#51515130',
+            top: 'calc(50vh - 20%)',
+            left: 'calc(50vw - 20%)',
+            display: this.state.searchClicked ? '' : 'none',
+        };
+
+        const boxSearchStyle = Object.assign({}, boxStyle, {
+            margin: '1em',
+            transition: '',
+            height: '',
+            float: '',
+            pointerEvents: '',
+            position: 'absolute',
+            zIndex: 4,
+            overflowX: 'hidden',
+            width: 'calc(100% - 2em)',
+            height: '2em',
+        });
+
+        const boxInputStyle = Object.assign({}, inputStyle, {
+            width: '100%',
+            height: '',
+            pointerEvents: ''
+        });
+
+        const resultsBoxStyle = Object.assign({}, boxSearchStyle, {
+            height: 'calc(100% - 5em)',
+            marginTop: '4em',
+            overflow: 'scroll',
+        });
 
         const typingTextValue = this.state.loggedInUser.length > 0 ? 'logged in as ' + this.state.loggedInUser : 'not logged in';
 
-        console.log(this.state.lastSaved);
-
         return (
             <div>
+                <div style={ searchResults }>
+                    <div style={ boxSearchStyle }>
+                        <input type="text" ref={ this.searchInput } onKeyPress={ this.searchKeyPress.bind(this) } style={ boxInputStyle } />
+                    </div>
+                    <div style={ resultsBoxStyle }>
+                        { this.state.searchResults }
+                    </div>
+                </div>
+
                 <div style={ caretStyle }>></div>
                 <TypingText text={ typingTextValue } style={ typingTextStyle } />
                 <TypingText text="last saved: " style={ lastSavedStyle } />
@@ -252,7 +368,7 @@ export default class Editor extends React.Component {
                     <div style={ optionsStyle }>
                         <span style={ itemStyle } onClick={ this.loginButtonClick.bind(this) }>login</span>
                         <span style={ itemStyle } onClick={ this.saveButtonClick.bind(this) }>save</span>
-                        <span style={ itemStyle }>search</span>
+                        <span style={ itemStyle } onClick={this.searchButtonClick.bind(this) }>search</span>
                     </div>
 
                     { /* LOGIN INPUT FIELDS */ }
@@ -265,6 +381,18 @@ export default class Editor extends React.Component {
                             <input type="text" ref={ this.passwordInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="password" style={ inputStyle } />
                         </div>
                         <div style={ loginButtonStyle } onClick={ this.userLoginAttempt.bind(this) }>
+                            <div style={{ padding: '0.25em 0.5em' }}>></div>
+                        </div>
+                    </div>
+
+                    <div style={{ margin: '2.5em 1em' }}>
+                        <div tabIndex="-1" style={ Object.assign(inputBoxStyle, { overflowX: 'hidden' }) }>
+                            <input type="text" ref={ this.newUsernameInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new username" style={ inputStyle } />
+                        </div>
+                        <div tabIndex="-1" style={ inputBoxStyle }>
+                            <input type="text" ref={ this.newPasswordInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new password" style={ inputStyle } />
+                        </div>
+                        <div style={ loginButtonStyle } onClick={ this.createUserAttempt.bind(this) }>
                             <div style={{ padding: '0.25em 0.5em' }}>></div>
                         </div>
                     </div>
