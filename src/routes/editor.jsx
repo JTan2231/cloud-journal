@@ -9,6 +9,7 @@ export default class Editor extends React.Component {
 
         this.state = {
             loginClicked: false,
+            newUserClicked: false,
             loggedInUser: '',
             userid: -1,
             entryid: -1,
@@ -31,17 +32,12 @@ export default class Editor extends React.Component {
     }
 
     loginButtonClick() {
-        this.setState({ loginClicked: !this.state.loginClicked, loginError: false });
+        if (!this.state.newUserClicked) {
+            this.setState({ loginClicked: !this.state.loginClicked, loginError: false });
 
-        this.usernameInput.current.focus();
-        this.usernameInput.current.select();
-    }
-
-    createUserButtonClick() {
-        this.setState({ newUserClicked: !this.state.newUserClicked, newUserError: false });
-
-        this.newUsernameInput.current.focus();
-        this.newUsernameInput.current.select();
+            this.usernameInput.current.focus();
+            this.usernameInput.current.select();
+        }
     }
 
     userLoginAttempt() {
@@ -106,9 +102,17 @@ export default class Editor extends React.Component {
         }).then(res => res.json()).then(res => {
             var processed = [];
 
+            const resultStyle = {
+                margin: '1em',
+                color: 'rgb(191, 187, 187)',
+                fontFamily: 'Courier New',
+                fontSize: '14px',
+            };
+
             for (const r of res) {
                 processed.push(
-                    <div style={{ margin: '1em' }} dangerouslySetInnerHTML={{ __html: r.raw_html }}>
+                    <div style={ resultStyle }>
+                        <span>{ r.id }. { r.text_preview }</span>
                     </div>
                 );
             }
@@ -186,18 +190,32 @@ export default class Editor extends React.Component {
             this.setState({ loginError: true });
         }
         else {
-            this.setState({ loginClicked: true });
-
-            this.usernameInput.current.focus();
-            this.usernameInput.current.select();
+            this.loginButtonClick();
         }
     }
 
     searchButtonClick() {
-        this.setState({ searchClicked: !this.state.searchClicked });
+        if (this.state.userid !== -1) {
+            this.setState({ searchClicked: !this.state.searchClicked });
 
-        this.searchInput.current.focus();
-        this.searchInput.current.select();
+            this.searchInput.current.focus();
+            this.searchInput.current.select();
+        }
+        else if (this.state.loginClicked) {
+            this.setState({ loginError: true });
+        }
+        else {
+            this.loginButtonClick();
+        }
+    }
+
+    newUserClick() {
+        if (!this.state.loginClicked) {
+            this.setState({ newUserClicked: !this.state.newUserClicked });
+
+            this.newUsernameInput.current.focus();
+            this.newUsernameInput.current.select();
+        }
     }
 
     render() {
@@ -230,34 +248,35 @@ export default class Editor extends React.Component {
             cursor: 'default',
         }, boxStyle);
 
-        const cond = this.state.loginClicked && this.state.loggedInUser.length === 0;
-
-        const transitionStyle = {
-            transition: 'height 0.5s',
-            height: cond ? '1.75em' : '0',
-            pointerEvents: cond ? '' : 'none',
+        const itemStyle = {
+            margin: '0.66em',
+            userSelect: 'none',
         };
 
-        const inputBoxStyle = Object.assign({
+        const loginCond = this.state.loginClicked && this.state.loggedInUser.length === 0;
+        const newUserCond = this.state.newUserClicked && this.state.loggedInUser.length === 0;
+
+        const transitionStyle = c => ({
+            transition: 'height 0.5s',
+            height: c ? '1.75em' : '0',
+            pointerEvents: c ? '' : 'none',
+        });
+
+        const loginInputBoxStyle = Object.assign({
             margin: '0.5em',
             overflowY: 'hidden',
-        }, boxStyle, transitionStyle, { border: this.state.loginError ? '1px solid red' : 'none' }); // this is jank; please find something better
+        }, boxStyle, transitionStyle(loginCond), { border: this.state.loginError ? '1px solid red' : 'none' }); // this is jank; please find something better
 
-        const inputStyle = Object.assign({
+        const loginInputStyle = Object.assign({
             padding: '0.25em 0.5em',
             color: menuTextColor,
             fontFamily: fontFamily,
             border: 'none',
             outline: 'none',
             backgroundColor: 'transparent',
-        }, transitionStyle);
+        }, transitionStyle(loginCond));
 
-        const itemStyle = {
-            margin: '0.66em',
-            userSelect: 'none',
-        };
-
-        const loginButtonStyle = Object.assign(boxStyle, transitionStyle, {
+        const loginButtonStyle = Object.assign({}, boxStyle, transitionStyle(loginCond), {
             border: 'none',
             overflowY: 'hidden',
             fontSize: '12px',
@@ -267,6 +286,10 @@ export default class Editor extends React.Component {
             float: 'right',
             cursor: 'default',
         });
+
+        const newUserInputBoxStyle = Object.assign({}, loginInputBoxStyle, transitionStyle(newUserCond), { border: this.state.newUserError ? '1px solid red' : 'none' });
+        const newUserInputStyle = Object.assign({}, loginInputStyle, transitionStyle(newUserCond));
+        const newUserButtonStyle = Object.assign({}, loginButtonStyle, transitionStyle(newUserCond));
 
         const typingTextStyle = {
             position: 'absolute',
@@ -331,7 +354,7 @@ export default class Editor extends React.Component {
             height: '2em',
         });
 
-        const boxInputStyle = Object.assign({}, inputStyle, {
+        const boxInputStyle = Object.assign({}, loginInputStyle, {
             width: '100%',
             height: '',
             pointerEvents: ''
@@ -366,38 +389,43 @@ export default class Editor extends React.Component {
 
                 <div style={ positionStyle }>
                     <div style={ optionsStyle }>
+                        <span style={ itemStyle } onClick={ this.newUserClick.bind(this) }>new user</span>
                         <span style={ itemStyle } onClick={ this.loginButtonClick.bind(this) }>login</span>
                         <span style={ itemStyle } onClick={ this.saveButtonClick.bind(this) }>save</span>
                         <span style={ itemStyle } onClick={this.searchButtonClick.bind(this) }>search</span>
                     </div>
 
-                    { /* LOGIN INPUT FIELDS */ }
+                    { /* LOGIN FIELDS */ }
 
                     <div style={{ margin: '1em' }}>
-                        <div tabIndex="-1" style={ inputBoxStyle }>
-                            <input type="text" ref={ this.usernameInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="username" style={ inputStyle } />
+                        <div tabIndex="-1" style={ loginInputBoxStyle }>
+                            <input type="text" ref={ this.usernameInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="username" style={ loginInputStyle } />
                         </div>
-                        <div tabIndex="-1" style={ inputBoxStyle }>
-                            <input type="text" ref={ this.passwordInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="password" style={ inputStyle } />
+                        <div tabIndex="-1" style={ loginInputBoxStyle }>
+                            <input type="text" ref={ this.passwordInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="password" style={ loginInputStyle } />
                         </div>
                         <div style={ loginButtonStyle } onClick={ this.userLoginAttempt.bind(this) }>
                             <div style={{ padding: '0.25em 0.5em' }}>></div>
                         </div>
                     </div>
 
+                    { /* END LOGIN FIELDS */ }
+
+                    { /* NEW USER FIELDS */ }
+
                     <div style={{ margin: '2.5em 1em' }}>
-                        <div tabIndex="-1" style={ Object.assign(inputBoxStyle, { overflowX: 'hidden' }) }>
-                            <input type="text" ref={ this.newUsernameInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new username" style={ inputStyle } />
+                        <div tabIndex="-1" style={ newUserInputBoxStyle }>
+                            <input type="text" ref={ this.newUsernameInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new username" style={ newUserInputStyle } />
                         </div>
-                        <div tabIndex="-1" style={ inputBoxStyle }>
-                            <input type="text" ref={ this.newPasswordInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new password" style={ inputStyle } />
+                        <div tabIndex="-1" style={ newUserInputBoxStyle }>
+                            <input type="text" ref={ this.newPasswordInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new password" style={ newUserInputStyle } />
                         </div>
-                        <div style={ loginButtonStyle } onClick={ this.createUserAttempt.bind(this) }>
+                        <div style={ newUserButtonStyle } onClick={ this.createUserAttempt.bind(this) }>
                             <div style={{ padding: '0.25em 0.5em' }}>></div>
                         </div>
                     </div>
 
-                    { /* END LOGIN FIELDS */ }
+                    { /* END NEW USER FIELDS */ }
 
                 </div>
 
