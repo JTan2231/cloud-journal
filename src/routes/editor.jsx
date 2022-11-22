@@ -10,6 +10,7 @@ export default class Editor extends React.Component {
         this.state = {
             loginClicked: false,
             newUserClicked: false,
+            simClicked: false,
             loggedInUser: '',
             userid: -1,
             entryid: -1,
@@ -18,6 +19,15 @@ export default class Editor extends React.Component {
             lastSaved: '',
             searchClicked: false,
             searchResults: [],
+            entryPreviews: [],
+            simResults: [],
+        };
+
+        this.textStyle = {
+            margin: '1em',
+            color: 'rgb(191, 187, 187)',
+            fontFamily: 'Courier New',
+            fontSize: '14px',
         };
 
         this.wordProcessor = React.createRef();
@@ -67,10 +77,23 @@ export default class Editor extends React.Component {
                     userid: res.user_id,
                     loginError: false
                 });
+
+                this.getEntries(res.user_id);
             }
             else if (res.errors) {
                 this.setState({ loginError: true });
             }
+        });
+    }
+
+    getEntries(userid) {
+        fetch(config.API_ROOT + 'entries/?user_id=' + userid, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }).then(res => res.json()).then(res => {
+            this.setState({ entryPreviews: res.map(kp => ({ entryid: kp.id, preview: kp.text_preview })) });
         });
     }
 
@@ -91,33 +114,75 @@ export default class Editor extends React.Component {
         });
     }
 
+    formatEntryList(entries, indices) {
+        var processed = [];
+
+        if (indices === null || indices === undefined) {
+            indices = [...Array(entries.length).keys()];
+        }
+
+        for (var i = 0; i < indices.length; i++) {
+            processed.push(
+                <div style={ this.textStyle }>
+                    <span>{ indices[i]+1 }. { entries[indices[i]].preview }</span>
+                </div>
+            );
+        }
+
+        return processed;
+    }
+
+    formatSimResultsList() {
+        var processed = [];
+
+        for (var i = 0; i < this.state.simResults.length; i++) {
+            let res = this.state.simResults[i];
+            processed.push(
+                <div style={ this.textStyle }>
+                    <span>{ res.entryid }. { res.text_preview }</span>
+                </div>
+            );
+        }
+
+        return processed;
+    }
+
+    similarityEntryListFormat(entries) {
+        var processed = [];
+        for (var i = 0; i < entries.length; i++) {
+            const kp = entries[i];
+
+            processed.push(
+                <div style={ this.textStyle } onClick={ (() => this.entrySimilarityQuery(kp.entryid)).bind(this) }>
+                    <span>{ i+1 }. { kp.preview }</span>
+                </div>
+            );
+        }
+
+        return processed;
+    }
+
     entryQuery() {
         const userid = this.state.userid;
         const query = this.searchInput.current.value;
-        fetch(config.API_ROOT + 'entries/' + '?user_id=' + userid + '&query=' + encodeURIComponent(query), {
+        fetch(config.API_ROOT + 'queries/' + '?user_id=' + userid + '&query=' + encodeURIComponent(query) + '&return=False', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(res => res.json()).then(res => res.map(r => r.id - 1)).then(indices => {
+            this.setState({ searchResults: this.formatEntryList(this.state.entryPreviews, indices) });
+        });
+    }
+
+    entrySimilarityQuery(entryid) {
+        fetch(config.API_ROOT + 'queries/?user_id=' + this.state.userid + '&qentry_id=' + entryid, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             }
         }).then(res => res.json()).then(res => {
-            var processed = [];
-
-            const resultStyle = {
-                margin: '1em',
-                color: 'rgb(191, 187, 187)',
-                fontFamily: 'Courier New',
-                fontSize: '14px',
-            };
-
-            for (const r of res) {
-                processed.push(
-                    <div style={ resultStyle }>
-                        <span>{ r.id }. { r.text_preview }</span>
-                    </div>
-                );
-            }
-
-            this.setState({ searchResults: processed });
+            this.setState({ simResults: res });
         });
     }
 
@@ -209,6 +274,18 @@ export default class Editor extends React.Component {
         }
     }
 
+    simButtonClick() {
+        if (this.state.userid !== -1) {
+            this.setState({ simClicked: !this.state.simClicked });
+        }
+        else if (this.state.loginClicked) {
+            this.setState({ loginError: true });
+        }
+        else {
+            this.loginButtonClick();
+        }
+    }
+
     newUserClick() {
         if (!this.state.loginClicked) {
             this.setState({ newUserClicked: !this.state.newUserClicked });
@@ -216,6 +293,11 @@ export default class Editor extends React.Component {
             this.newUsernameInput.current.focus();
             this.newUsernameInput.current.select();
         }
+    }
+
+    newEntryClick() {
+        this.setState({ entryid: -1, lastSaved: '' });
+        this.wordProcessor.current.clear();
     }
 
     render() {
@@ -332,12 +414,13 @@ export default class Editor extends React.Component {
 
         const searchResults = {
             position: 'absolute',
-            width: '40%',
-            height: '40%',
+            width: '60%',
+            height: '60%',
             zIndex: 3,
             backgroundColor: '#51515130',
-            top: 'calc(50vh - 20%)',
-            left: 'calc(50vw - 20%)',
+            top: 'calc(50vh - 30%)',
+            left: 'calc(50vw - 30%)',
+            borderRadius: '0.5em',
             display: this.state.searchClicked ? '' : 'none',
         };
 
@@ -352,12 +435,14 @@ export default class Editor extends React.Component {
             overflowX: 'hidden',
             width: 'calc(100% - 2em)',
             height: '2em',
+            border: 'none',
         });
 
         const boxInputStyle = Object.assign({}, loginInputStyle, {
             width: '100%',
             height: '',
-            pointerEvents: ''
+            pointerEvents: '',
+            border: 'none',
         });
 
         const resultsBoxStyle = Object.assign({}, boxSearchStyle, {
@@ -366,23 +451,60 @@ export default class Editor extends React.Component {
             overflow: 'scroll',
         });
 
+        const simResults = Object.assign({}, searchResults, { display: this.state.simClicked ? '' : 'none' });
+        const boxSimResults = Object.assign({}, boxSearchStyle, {
+            height: 'calc(100% - 2em)',
+            width: '25%',
+        });
+
+        const simResultsBox = Object.assign({}, resultsBoxStyle, {
+            margin: '1em',
+            marginTop: '1em',
+            left: 'calc(25% + 1em)',
+            width: 'calc(75% - 3em)',
+            height: 'calc(100% - 2em)',
+        });
+
         const typingTextValue = this.state.loggedInUser.length > 0 ? 'logged in as ' + this.state.loggedInUser : 'not logged in';
 
         return (
             <div>
+
+                { /* SEARCH BOX */ }
+
                 <div style={ searchResults }>
                     <div style={ boxSearchStyle }>
-                        <input type="text" ref={ this.searchInput } onKeyPress={ this.searchKeyPress.bind(this) } style={ boxInputStyle } />
+                        <input type="text" ref={ this.searchInput } onKeyPress={ this.searchKeyPress.bind(this) } placeholder="search" style={ boxInputStyle } />
                     </div>
                     <div style={ resultsBoxStyle }>
                         { this.state.searchResults }
                     </div>
                 </div>
 
+                { /* END SEARCH BOX */ }
+
+                { /* SIMILARITY BOX */ }
+
+                <div style={ simResults }>
+                    <div style={ boxSimResults }>
+                        { this.similarityEntryListFormat(this.state.entryPreviews) }
+                    </div>
+                    <div style={ simResultsBox }>
+                        { this.formatSimResultsList() }
+                    </div>
+                </div>
+
+                { /* END SIMILARITY BOX*/ }
+
+                { /* HEADER */ }
+
                 <div style={ caretStyle }>></div>
                 <TypingText text={ typingTextValue } style={ typingTextStyle } />
                 <TypingText text="last saved: " style={ lastSavedStyle } />
                 <TypingText text={ this.state.lastSaved } compareAll={ true } style={ timeStyle } />
+
+                { /* END HEADER */ }
+
                 <WordProcessor ref={ this.wordProcessor } />
 
                 { /* NAVIGATION BOX */ }
@@ -391,8 +513,10 @@ export default class Editor extends React.Component {
                     <div style={ optionsStyle }>
                         <span style={ itemStyle } onClick={ this.newUserClick.bind(this) }>new user</span>
                         <span style={ itemStyle } onClick={ this.loginButtonClick.bind(this) }>login</span>
+                        <span style={ itemStyle } onClick={ this.newEntryClick.bind(this) }>new entry</span>
                         <span style={ itemStyle } onClick={ this.saveButtonClick.bind(this) }>save</span>
                         <span style={ itemStyle } onClick={this.searchButtonClick.bind(this) }>search</span>
+                        <span style={ itemStyle } onClick={this.simButtonClick.bind(this) }>similarities</span>
                     </div>
 
                     { /* LOGIN FIELDS */ }

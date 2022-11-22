@@ -84,6 +84,10 @@ export default class WordProcessor extends React.Component {
         return texts;
     }
 
+    clear() {
+        this.textbox.current.innerHTML = '';
+    }
+
     render() {
         const outerStyle = {
             position: 'relative',
