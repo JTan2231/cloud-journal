@@ -1,7 +1,10 @@
 import * as config from '../config.js';
+import * as styles from '../styles.js';
 import React from 'react';
 import WordProcessor from '../components/word_processor.jsx';
 import TypingText from '../components/typing_text.jsx';
+
+import Search from './search.jsx';
 
 export default class Editor extends React.Component {
     constructor(props) {
@@ -300,196 +303,57 @@ export default class Editor extends React.Component {
         this.wordProcessor.current.clear();
     }
 
+    addLoginConditions(styleArray, transitionCond, errorCond) {
+        styleArray = styleArray.map(style => Object.assign({}, style, styles.transition(transitionCond)));
+        return styleArray.map(style => Object.assign({}, style, { border: errorCond ? '1px solid red' : 'none' }));
+    }
+
+    addDisplay(style, cond) {
+        return Object.assign({}, style, { display: cond ? '' : 'none' });
+    }
+
     render() {
-        const backgroundColor = 'rgba(136, 136, 136, 0.1)';
-        const menuTextColor = 'rgb(191, 187, 187)';
-        const borderColor = '1px solid rgba(188, 193, 189, 0.43)';
-
-        const fontFamily = 'Courier New';
-
-        const positionStyle = {
-            zIndex: '1',
-            position: 'fixed',
-            top: '0',
-            right: '0',
-            margin: '1em',
-        };
-
-        const boxStyle = {
-            color: menuTextColor,
-            backgroundColor: backgroundColor,
-            border: borderColor,
-            borderRadius: '0.5em',
-        };
-
-        const optionsStyle = Object.assign({
-            padding: '0.5em 1.5em',
-            fontSize: '14px',
-            fontFamily: fontFamily,
-            textAlign: 'center',
-            cursor: 'default',
-        }, boxStyle);
-
-        const itemStyle = {
-            margin: '0.66em',
-            userSelect: 'none',
-        };
-
         const loginCond = this.state.loginClicked && this.state.loggedInUser.length === 0;
         const newUserCond = this.state.newUserClicked && this.state.loggedInUser.length === 0;
 
-        const transitionStyle = c => ({
-            transition: 'height 0.5s',
-            height: c ? '1.75em' : '0',
-            pointerEvents: c ? '' : 'none',
-        });
+        const [ loginInputBox,
+                loginInput,
+                loginButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
+                                                        loginCond, this.state.loginError);
 
-        const loginInputBoxStyle = Object.assign({
-            margin: '0.5em',
-            overflowY: 'hidden',
-        }, boxStyle, transitionStyle(loginCond), { border: this.state.loginError ? '1px solid red' : 'none' }); // this is jank; please find something better
+        const [ newUserInputBox,
+                newUserInput,
+                newUserButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
+                                                          newUserCond, this.state.newUserError);
 
-        const loginInputStyle = Object.assign({
-            padding: '0.25em 0.5em',
-            color: menuTextColor,
-            fontFamily: fontFamily,
-            border: 'none',
-            outline: 'none',
-            backgroundColor: 'transparent',
-        }, transitionStyle(loginCond));
 
-        const loginButtonStyle = Object.assign({}, boxStyle, transitionStyle(loginCond), {
-            border: 'none',
-            overflowY: 'hidden',
-            fontSize: '12px',
-            fontFamily: fontFamily,
-            width: 'fit-content',
-            margin: '0 0.5em 0.5em',
-            float: 'right',
-            cursor: 'default',
-        });
-
-        const newUserInputBoxStyle = Object.assign({}, loginInputBoxStyle, transitionStyle(newUserCond), { border: this.state.newUserError ? '1px solid red' : 'none' });
-        const newUserInputStyle = Object.assign({}, loginInputStyle, transitionStyle(newUserCond));
-        const newUserButtonStyle = Object.assign({}, loginButtonStyle, transitionStyle(newUserCond));
-
-        const typingTextStyle = {
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            margin: '1em',
-            fontFamily: fontFamily,
-            zIndex: 2,
-        };
-
-        const lastSavedStyle = {
-            position: 'absolute',
-            top: '0',
-            left: 'calc(50% - 10em)',
-            margin: '1em',
-            fontFamily: fontFamily,
-            zIndex: 2,
-            color: 'grey',
-        };
-
-        const timeStyle = {
-            position: 'absolute',
-            top: '0',
-            left: 'calc(50% - 3em)',
-            margin: '1em',
-            fontFamily: fontFamily,
-            zIndex: 2,
-            color: 'green',
-        };
-
-        const caretStyle = {
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            color: 'grey',
-            fontFamily: fontFamily,
-            zIndex: 2,
-            margin: '4.3em 1.5em',
-        };
-
-        const searchResults = {
-            position: 'absolute',
-            width: '60%',
-            height: '60%',
-            zIndex: 3,
-            backgroundColor: '#51515130',
-            top: 'calc(50vh - 30%)',
-            left: 'calc(50vw - 30%)',
-            borderRadius: '0.5em',
-            display: this.state.searchClicked ? '' : 'none',
-        };
-
-        const boxSearchStyle = Object.assign({}, boxStyle, {
-            margin: '1em',
-            transition: '',
-            height: '',
-            float: '',
-            pointerEvents: '',
-            position: 'absolute',
-            zIndex: 4,
-            overflowX: 'hidden',
-            width: 'calc(100% - 2em)',
-            height: '2em',
-            border: 'none',
-        });
-
-        const boxInputStyle = Object.assign({}, loginInputStyle, {
-            width: '100%',
-            height: '',
-            pointerEvents: '',
-            border: 'none',
-        });
-
-        const resultsBoxStyle = Object.assign({}, boxSearchStyle, {
-            height: 'calc(100% - 5em)',
-            marginTop: '4em',
-            overflow: 'scroll',
-        });
-
-        const simResults = Object.assign({}, searchResults, { display: this.state.simClicked ? '' : 'none' });
-        const boxSimResults = Object.assign({}, boxSearchStyle, {
-            height: 'calc(100% - 2em)',
-            width: '25%',
-        });
-
-        const simResultsBox = Object.assign({}, resultsBoxStyle, {
-            margin: '1em',
-            marginTop: '1em',
-            left: 'calc(25% + 1em)',
-            width: 'calc(75% - 3em)',
-            height: 'calc(100% - 2em)',
-        });
+        const searchResults = this.addDisplay(styles.searchResults, this.state.searchClicked);
+        const simResults = this.addDisplay(styles.searchResults, this.state.simClicked);
 
         const typingTextValue = this.state.loggedInUser.length > 0 ? 'logged in as ' + this.state.loggedInUser : 'not logged in';
+
+        const searchProps = {
+            userid: this.state.userid,
+            entryPreviews: this.state.entryPreviews,
+            searchClicked: this.state.searchClicked,
+        };
 
         return (
             <div>
 
                 { /* SEARCH BOX */ }
 
-                <div style={ searchResults }>
-                    <div style={ boxSearchStyle }>
-                        <input type="text" ref={ this.searchInput } onKeyPress={ this.searchKeyPress.bind(this) } placeholder="search" style={ boxInputStyle } />
-                    </div>
-                    <div style={ resultsBoxStyle }>
-                        { this.state.searchResults }
-                    </div>
-                </div>
+                <Search { ...searchProps } />
 
                 { /* END SEARCH BOX */ }
 
                 { /* SIMILARITY BOX */ }
 
                 <div style={ simResults }>
-                    <div style={ boxSimResults }>
+                    <div style={ styles.boxSimResults }>
                         { this.similarityEntryListFormat(this.state.entryPreviews) }
                     </div>
-                    <div style={ simResultsBox }>
+                    <div style={ styles.simResultsBox }>
                         { this.formatSimResultsList() }
                     </div>
                 </div>
@@ -498,10 +362,10 @@ export default class Editor extends React.Component {
 
                 { /* HEADER */ }
 
-                <div style={ caretStyle }>></div>
-                <TypingText text={ typingTextValue } style={ typingTextStyle } />
-                <TypingText text="last saved: " style={ lastSavedStyle } />
-                <TypingText text={ this.state.lastSaved } compareAll={ true } style={ timeStyle } />
+                <div style={ styles.caret }>></div>
+                <TypingText text={ typingTextValue } style={ styles.typingText } />
+                <TypingText text="last saved: " style={ styles.lastSaved } />
+                <TypingText text={ this.state.lastSaved } compareAll={ true } style={ styles.time } />
 
                 { /* END HEADER */ }
 
@@ -509,26 +373,26 @@ export default class Editor extends React.Component {
 
                 { /* NAVIGATION BOX */ }
 
-                <div style={ positionStyle }>
-                    <div style={ optionsStyle }>
-                        <span style={ itemStyle } onClick={ this.newUserClick.bind(this) }>new user</span>
-                        <span style={ itemStyle } onClick={ this.loginButtonClick.bind(this) }>login</span>
-                        <span style={ itemStyle } onClick={ this.newEntryClick.bind(this) }>new entry</span>
-                        <span style={ itemStyle } onClick={ this.saveButtonClick.bind(this) }>save</span>
-                        <span style={ itemStyle } onClick={this.searchButtonClick.bind(this) }>search</span>
-                        <span style={ itemStyle } onClick={this.simButtonClick.bind(this) }>similarities</span>
+                <div style={ styles.position }>
+                    <div style={ styles.options }>
+                        <span style={ styles.item } onClick={ this.newUserClick.bind(this) }>new user</span>
+                        <span style={ styles.item } onClick={ this.loginButtonClick.bind(this) }>login</span>
+                        <span style={ styles.item } onClick={ this.newEntryClick.bind(this) }>new entry</span>
+                        <span style={ styles.item } onClick={ this.saveButtonClick.bind(this) }>save</span>
+                        <span style={ styles.item } onClick={ this.searchButtonClick.bind(this) }>search</span>
+                        <span style={ styles.item } onClick={ this.simButtonClick.bind(this) }>similarities</span>
                     </div>
 
                     { /* LOGIN FIELDS */ }
 
                     <div style={{ margin: '1em' }}>
-                        <div tabIndex="-1" style={ loginInputBoxStyle }>
-                            <input type="text" ref={ this.usernameInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="username" style={ loginInputStyle } />
+                        <div tabIndex="-1" style={ loginInputBox }>
+                            <input type="text" ref={ this.usernameInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="username" style={ loginInput } />
                         </div>
-                        <div tabIndex="-1" style={ loginInputBoxStyle }>
-                            <input type="text" ref={ this.passwordInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="password" style={ loginInputStyle } />
+                        <div tabIndex="-1" style={ loginInputBox }>
+                            <input type="text" ref={ this.passwordInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="password" style={ loginInput } />
                         </div>
-                        <div style={ loginButtonStyle } onClick={ this.userLoginAttempt.bind(this) }>
+                        <div style={ loginButton } onClick={ this.userLoginAttempt.bind(this) }>
                             <div style={{ padding: '0.25em 0.5em' }}>></div>
                         </div>
                     </div>
@@ -538,13 +402,13 @@ export default class Editor extends React.Component {
                     { /* NEW USER FIELDS */ }
 
                     <div style={{ margin: '2.5em 1em' }}>
-                        <div tabIndex="-1" style={ newUserInputBoxStyle }>
-                            <input type="text" ref={ this.newUsernameInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new username" style={ newUserInputStyle } />
+                        <div tabIndex="-1" style={ newUserInputBox }>
+                            <input type="text" ref={ this.newUsernameInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new username" style={ newUserInput } />
                         </div>
-                        <div tabIndex="-1" style={ newUserInputBoxStyle }>
-                            <input type="text" ref={ this.newPasswordInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new password" style={ newUserInputStyle } />
+                        <div tabIndex="-1" style={ newUserInputBox }>
+                            <input type="text" ref={ this.newPasswordInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new password" style={ newUserInput } />
                         </div>
-                        <div style={ newUserButtonStyle } onClick={ this.createUserAttempt.bind(this) }>
+                        <div style={ newUserButton } onClick={ this.createUserAttempt.bind(this) }>
                             <div style={{ padding: '0.25em 0.5em' }}>></div>
                         </div>
                     </div>
