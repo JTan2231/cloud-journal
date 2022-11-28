@@ -28,7 +28,7 @@ export default class Search extends React.Component {
         for (var i = 0; i < indices.length; i++) {
             processed.push(
                 <div style={ this.textStyle }>
-                    <span>{ indices[i]+1 }. { entries[indices[i]].preview }</span>
+                    <span>{ indices[i]+1 }. { entries[indices[i]] }</span>
                 </div>
             );
         }
@@ -39,13 +39,21 @@ export default class Search extends React.Component {
     entryQuery() {
         const userid = this.props.userid;
         const query = this.searchInput.current.value;
-        fetch(config.API_ROOT + 'queries/' + '?user_id=' + userid + '&query=' + encodeURIComponent(query) + '&return=False', {
+        fetch(config.API_ROOT + 'queries/' + '?user_id=' + userid + '&query=' + encodeURIComponent(query) + '&return=True', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             }
-        }).then(res => res.json()).then(res => res.map(r => r.id - 1)).then(indices => {
-            this.setState({ searchResults: this.formatEntryList(this.props.entryPreviews, indices) });
+        }).then(res => res.json()).then(res => res.map(r => ({
+            id: r.id - 1,
+            preview: r.text_preview
+        }))).then(res => {
+            const previews = res.map(r => r.preview);
+            const indices = res.map(r => r.id);
+
+            console.log(previews);
+
+            this.setState({ searchResults: this.formatEntryList(previews, indices) });
         });
     }
 

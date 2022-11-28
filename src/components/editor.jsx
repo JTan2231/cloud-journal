@@ -294,6 +294,10 @@ export default class Editor extends React.Component {
     }
 
     simButtonClick() {
+        if (!this.state.simClicked) {
+            this.getEntries(this.state.userid)
+        }
+
         this.setState({
             simClicked: !this.state.simClicked,
             searchClicked: false,
@@ -348,7 +352,6 @@ export default class Editor extends React.Component {
 
         newStyleArray = newStyleArray.map(style => Object.assign({}, style, { border: 'none' }));
         // this is probably unmaintainable
-        console.log("STYLEARRAY[0], ERRORCOND:", styleArray[0], errorCond);
         newStyleArray[0] = Object.assign({}, newStyleArray[0], { border: errorCond ? '1px solid red' : 'none' });
 
         return newStyleArray;
