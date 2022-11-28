@@ -40,8 +40,8 @@ export default class TypingText extends React.Component {
     }
 
     buildText() {
-        var text = this.state.text;
-        var idx = this.state.build_index;
+        let text = this.state.text;
+        let idx = this.state.build_index;
 
         if (text === this.state.title) {
             this.setState({ built: true, clock: 1 });
@@ -58,8 +58,8 @@ export default class TypingText extends React.Component {
     }
 
     destroyText() {
-        var text = this.state.text;
-        var idx = this.state.build_index;
+        let text = this.state.text;
+        let idx = this.state.build_index;
 
         if (text.length === 0) {
             this.setState({
@@ -78,15 +78,28 @@ export default class TypingText extends React.Component {
         });
     }
 
+    findFirstDifference(s1, s2) {
+        let i;
+        for (i = 0; i < Math.min(s1.length, s2.length); i++) {
+            if (s1[i] !== s2[i]) {
+                break;
+            }
+        }
+
+        return i;
+    }
+
     tick() {
-        var text = this.state.text, clock = Math.min(this.state.clock + 1, this.build_frequency);
+        let text = this.state.text, clock = Math.min(this.state.clock + 1, this.build_frequency);
         this.setState({ title: this.props.text });
         if (clock - this.build_frequency === 0) {
-            if (!this.state.built) {
+            let firstIdx = this.findFirstDifference(text, this.state.title);
+
+            if (!this.state.built && firstIdx === this.state.build_index) {
                 this.buildText();
                 return;
             }
-            else if (this.compareWholeStrings && text !== this.state.title) {
+            else if (firstIdx !== this.state.build_index) {
                 this.destroyText();
                 return;
             }
@@ -99,7 +112,7 @@ export default class TypingText extends React.Component {
             }
         }
 
-        var newState = {
+        let newState = {
             text: text,
             clock: clock,
             color: text.length > 0 && text[0] !== 'n' ? 'green' : 'grey',

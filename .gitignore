@@ -24,3 +24,4 @@ yarn-error.log*
 
 build.sh
 build_s3.sh
+commit_build.sh
