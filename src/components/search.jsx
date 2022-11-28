@@ -1,7 +1,5 @@
-import * as config from '../config.js';
+import * as config from '../util/config.js';
 import React from 'react';
-import WordProcessor from '../components/word_processor.jsx';
-import TypingText from '../components/typing_text.jsx';
 
 export default class Search extends React.Component {
     constructor(props) {

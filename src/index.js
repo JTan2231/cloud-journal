@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import Editor from './routes/editor.jsx';
+import Editor from './components/editor.jsx';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

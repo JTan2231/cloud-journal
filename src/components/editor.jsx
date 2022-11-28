@@ -1,8 +1,8 @@
-import * as config from '../config.js';
-import * as styles from '../styles.js';
+import * as config from '../util/config.js';
+import * as styles from '../util/styles.js';
 import React from 'react';
-import WordProcessor from '../components/word_processor.jsx';
-import TypingText from '../components/typing_text.jsx';
+import WordProcessor from './word_processor.jsx';
+import TypingText from './typing_text.jsx';
 
 import Search from './search.jsx';
 
@@ -44,13 +44,11 @@ export default class Editor extends React.Component {
         this.searchInput = React.createRef();
     }
 
-    loginButtonClick() {
-        if (!this.state.newUserClicked) {
-            this.setState({ loginClicked: !this.state.loginClicked, loginError: false });
-
-            this.usernameInput.current.focus();
-            this.usernameInput.current.select();
-        }
+    clearInputs() {
+        this.usernameInput.current.value = '';
+        this.passwordInput.current.value = '';
+        this.newUsernameInput.current.value = '';
+        this.newPasswordInput.current.value = '';
     }
 
     userLoginAttempt() {
@@ -78,14 +76,24 @@ export default class Editor extends React.Component {
                 this.setState({
                     loggedInUser: username,
                     userid: res.user_id,
-                    loginError: false
+                    loginError: false,
+                    loginClicked: false,
                 });
 
                 this.getEntries(res.user_id);
+                this.clearInputs();
             }
             else if (res.errors) {
                 this.setState({ loginError: true });
             }
+        });
+    }
+
+    userLogout() {
+        this.setState({
+            loggedInUser: '',
+            userid: -1,
+            loginError: false,
         });
     }
 
@@ -113,6 +121,17 @@ export default class Editor extends React.Component {
         }).then(res => res.json()).then(res => {
             if (res.errors) {
                 this.setState({ newUserError: true });
+            }
+            else {
+                this.setState({
+                    loggedInUser: res.username,
+                    userid: res.user_id,
+                    loginError: false,
+                    newUserError: false,
+                    newUserClicked: false,
+                });
+
+                this.clearInputs();
             }
         });
     }
@@ -289,13 +308,42 @@ export default class Editor extends React.Component {
         }
     }
 
-    newUserClick() {
-        if (!this.state.loginClicked) {
-            this.setState({ newUserClicked: !this.state.newUserClicked });
-
-            this.newUsernameInput.current.focus();
-            this.newUsernameInput.current.select();
+    loginButtonClick() {
+        if (this.state.loggedInUser.length > 0) {
+            this.userLogout();
         }
+        else {
+            let newState = {
+                loginClicked: !this.state.loginClicked,
+                loginError: false,
+            };
+
+            if (this.state.newUserClicked) {
+                Object.assign(newState, { newUserClicked: !this.state.newUserClicked, newUserError: false });
+            }
+
+            this.setState(newState);
+
+            this.usernameInput.current.focus();
+            this.usernameInput.current.select();
+        }
+    }
+
+    newUserClick() {
+        let newState = {
+            newUserClicked: !this.state.newUserClicked,
+            newUserError: false,
+        };
+
+        // close/cleanup the login fields
+        if (this.state.loginClicked) {
+            Object.assign(newState, { loginClicked: !this.state.loginClicked, loginError: false });
+        }
+
+        this.setState(newState);
+
+        this.newUsernameInput.current.focus();
+        this.newUsernameInput.current.select();
     }
 
     newEntryClick() {
@@ -304,8 +352,14 @@ export default class Editor extends React.Component {
     }
 
     addLoginConditions(styleArray, transitionCond, errorCond) {
-        styleArray = styleArray.map(style => Object.assign({}, style, styles.transition(transitionCond)));
-        return styleArray.map(style => Object.assign({}, style, { border: errorCond ? '1px solid red' : 'none' }));
+        let newStyleArray = styleArray.map(style => Object.assign({}, style, styles.transition(transitionCond)));
+
+        newStyleArray = newStyleArray.map(style => Object.assign({}, style, { border: 'none' }));
+        // this is probably unmaintainable
+        console.log("STYLEARRAY[0], ERRORCOND:", styleArray[0], errorCond);
+        newStyleArray[0] = Object.assign({}, newStyleArray[0], { border: errorCond ? '1px solid red' : 'none' });
+
+        return newStyleArray;
     }
 
     addDisplay(style, cond) {
@@ -338,6 +392,11 @@ export default class Editor extends React.Component {
             searchClicked: this.state.searchClicked,
         };
 
+        const newUserStyle = Object.assign({}, styles.item, { display: this.state.loggedInUser.length > 0 ? 'none' : '' });
+
+        const loggedInStyles = Object.assign({}, styles.item, { display: this.state.loggedInUser.length > 0 ? '' : 'none' });
+ 
+
         return (
             <div>
 
@@ -363,7 +422,7 @@ export default class Editor extends React.Component {
                 { /* HEADER */ }
 
                 <div style={ styles.caret }>></div>
-                <TypingText text={ typingTextValue } style={ styles.typingText } />
+                <TypingText text={ typingTextValue } compareAll={ true } style={ styles.typingText } />
                 <TypingText text="last saved: " style={ styles.lastSaved } />
                 <TypingText text={ this.state.lastSaved } compareAll={ true } style={ styles.time } />
 
@@ -375,12 +434,14 @@ export default class Editor extends React.Component {
 
                 <div style={ styles.position }>
                     <div style={ styles.options }>
-                        <span style={ styles.item } onClick={ this.newUserClick.bind(this) }>new user</span>
-                        <span style={ styles.item } onClick={ this.loginButtonClick.bind(this) }>login</span>
-                        <span style={ styles.item } onClick={ this.newEntryClick.bind(this) }>new entry</span>
-                        <span style={ styles.item } onClick={ this.saveButtonClick.bind(this) }>save</span>
-                        <span style={ styles.item } onClick={ this.searchButtonClick.bind(this) }>search</span>
-                        <span style={ styles.item } onClick={ this.simButtonClick.bind(this) }>similarities</span>
+                        <span style={ newUserStyle } onClick={ this.newUserClick.bind(this) }>new user</span>
+                        <span style={ styles.item } onClick={ this.loginButtonClick.bind(this) }>
+                            { this.state.loggedInUser.length > 0 ? 'logout' : 'login' }
+                        </span>
+                        <span style={ loggedInStyles } onClick={ this.newEntryClick.bind(this) }>new entry</span>
+                        <span style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
+                        <span style={ loggedInStyles } onClick={ this.searchButtonClick.bind(this) }>search</span>
+                        <span style={ loggedInStyles } onClick={ this.simButtonClick.bind(this) }>similarities</span>
                     </div>
 
                     { /* LOGIN FIELDS */ }
