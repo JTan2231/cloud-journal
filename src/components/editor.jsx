@@ -94,6 +94,8 @@ export default class Editor extends React.Component {
             loggedInUser: '',
             userid: -1,
             loginError: false,
+            searchClicked: false,
+            simClicked: false,
         });
     }
 
@@ -282,30 +284,20 @@ export default class Editor extends React.Component {
     }
 
     searchButtonClick() {
-        if (this.state.userid !== -1) {
-            this.setState({ searchClicked: !this.state.searchClicked });
+        this.setState({
+            searchClicked: !this.state.searchClicked,
+            simClicked: false,
+        });
 
-            this.searchInput.current.focus();
-            this.searchInput.current.select();
-        }
-        else if (this.state.loginClicked) {
-            this.setState({ loginError: true });
-        }
-        else {
-            this.loginButtonClick();
-        }
+        this.searchInput.current.focus();
+        this.searchInput.current.select();
     }
 
     simButtonClick() {
-        if (this.state.userid !== -1) {
-            this.setState({ simClicked: !this.state.simClicked });
-        }
-        else if (this.state.loginClicked) {
-            this.setState({ loginError: true });
-        }
-        else {
-            this.loginButtonClick();
-        }
+        this.setState({
+            simClicked: !this.state.simClicked,
+            searchClicked: false,
+        });
     }
 
     loginButtonClick() {

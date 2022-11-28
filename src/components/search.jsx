@@ -1,4 +1,5 @@
 import * as config from '../util/config.js';
+import * as styles from '../util/styles.js';
 import React from 'react';
 
 export default class Search extends React.Component {
@@ -68,17 +69,9 @@ export default class Search extends React.Component {
             borderRadius: '0.5em',
         };
 
-        const searchResults = {
-            position: 'absolute',
-            width: '60%',
-            height: '60%',
-            zIndex: 3,
-            backgroundColor: '#51515130',
-            top: 'calc(50vh - 30%)',
-            left: 'calc(50vw - 30%)',
-            borderRadius: '0.5em',
+        const searchResults = Object.assign({}, styles.searchResults, {
             display: this.props.searchClicked ? '' : 'none',
-        };
+        });
 
         const boxSearchStyle = Object.assign({}, boxStyle, {
             margin: '1em',
@@ -105,6 +98,7 @@ export default class Search extends React.Component {
             height: '',
             pointerEvents: '',
             border: 'none',
+            margin: '0.3em',
         });
 
         const resultsBoxStyle = Object.assign({}, boxSearchStyle, {
