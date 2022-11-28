@@ -18,17 +18,13 @@ export default class Search extends React.Component {
         this.searchInput = React.createRef();
     }
 
-    formatEntryList(entries, indices) {
+    formatEntryList(entries) {
         var processed = [];
 
-        if (indices === null || indices === undefined) {
-            indices = [...Array(entries.length).keys()];
-        }
-
-        for (var i = 0; i < indices.length; i++) {
+        for (var i = 0; i < entries.length; i++) {
             processed.push(
                 <div style={ this.textStyle }>
-                    <span>{ indices[i]+1 }. { entries[indices[i]] }</span>
+                    <span>{ i + 1 }. { entries[i] }</span>
                 </div>
             );
         }
@@ -49,11 +45,8 @@ export default class Search extends React.Component {
             preview: r.text_preview
         }))).then(res => {
             const previews = res.map(r => r.preview);
-            const indices = res.map(r => r.id);
 
-            console.log(previews);
-
-            this.setState({ searchResults: this.formatEntryList(previews, indices) });
+            this.setState({ searchResults: this.formatEntryList(previews) });
         });
     }
 
