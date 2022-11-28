@@ -1,2 +1,2 @@
-//export const API_ROOT = 'http://cloudnote-dev.us-east-1.elasticbeanstalk.com/';
-export const API_ROOT = 'http://localhost:8000/';
+export const API_ROOT = 'https://dqugm2ui7smsf.cloudfront.net/';
+//export const API_ROOT = 'http://localhost:8000/';
