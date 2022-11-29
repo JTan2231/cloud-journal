@@ -8,13 +8,6 @@ export default class Search extends React.Component {
 
         this.state = {};
 
-        this.textStyle = {
-            margin: '1em',
-            color: 'rgb(191, 187, 187)',
-            fontFamily: 'Courier New',
-            fontSize: '14px',
-        };
-
         this.searchInput = React.createRef();
     }
 
@@ -23,7 +16,7 @@ export default class Search extends React.Component {
 
         for (var i = 0; i < entries.length; i++) {
             processed.push(
-                <div style={ this.textStyle }>
+                <div style={ styles.textStyle }>
                     <span>{ i + 1 }. { entries[i] }</span>
                 </div>
             );
@@ -35,7 +28,7 @@ export default class Search extends React.Component {
     entryQuery() {
         const userid = this.props.userid;
         const query = this.searchInput.current.value;
-        fetch(config.API_ROOT + 'queries/' + '?user_id=' + userid + '&query=' + encodeURIComponent(query) + '&return=True', {
+        fetch(config.API_ROOT + 'queries/' + '?user_id=' + userid + '&query=' + encodeURI(query) + '&return=True', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -44,9 +37,14 @@ export default class Search extends React.Component {
             id: r.id - 1,
             preview: r.text_preview
         }))).then(res => {
-            const previews = res.map(r => r.preview);
+            let previews = res.map(r => r.preview);
+            previews = this.formatEntryList(previews);
+            
+            if (previews.length === 0) {
+                previews = (<div style={ styles.textStyle }>{ `There's nothing here...` }</div>);
+            }
 
-            this.setState({ searchResults: this.formatEntryList(previews) });
+            this.setState({ searchResults: previews });
         });
     }
 

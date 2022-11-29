@@ -24,6 +24,7 @@ export default class Editor extends React.Component {
             searchResults: [],
             entryPreviews: [],
             simResults: [],
+            entryIdMap: new Map(),
         };
 
         this.textStyle = {
@@ -106,7 +107,14 @@ export default class Editor extends React.Component {
                 'Content-Type': 'application/json',
             },
         }).then(res => res.json()).then(res => {
-            this.setState({ entryPreviews: res.map(kp => ({ entryid: kp.id, preview: kp.text_preview })) });
+            let entries = res.map(kp => ({ entryid: kp.id, preview: kp.text_preview }));
+
+            let newIdMap = new Map();
+            for (const e of entries) {
+                newIdMap.set(e.preview, e.entryid);
+            }
+
+            this.setState({ entryPreviews: entries, entryIdMap: newIdMap });
         });
     }
 
@@ -139,13 +147,13 @@ export default class Editor extends React.Component {
     }
 
     formatEntryList(entries, indices) {
-        var processed = [];
+        let processed = [];
 
         if (indices === null || indices === undefined) {
             indices = [...Array(entries.length).keys()];
         }
 
-        for (var i = 0; i < indices.length; i++) {
+        for (let i = 0; i < indices.length; i++) {
             processed.push(
                 <div style={ this.textStyle }>
                     <span>{ indices[i]+1 }. { entries[indices[i]].preview }</span>
@@ -157,30 +165,38 @@ export default class Editor extends React.Component {
     }
 
     formatSimResultsList() {
-        var processed = [];
+        let processed = [];
 
-        for (var i = 0; i < this.state.simResults.length; i++) {
+        for (let i = 0; i < this.state.simResults.length; i++) {
             let res = this.state.simResults[i];
             processed.push(
                 <div style={ this.textStyle }>
-                    <span>{ res.entryid }. { res.text_preview }</span>
+                    <span>{ this.state.entryIdMap.get(res.text_preview) }. { res.text_preview }</span>
                 </div>
             );
+        }
+
+        if (processed.length === 0) {
+            processed = (<div style={ styles.textStyle }>{ `There's nothing here...` }</div>);
         }
 
         return processed;
     }
 
     similarityEntryListFormat(entries) {
-        var processed = [];
-        for (var i = 0; i < entries.length; i++) {
+        let processed = [];
+        for (let i = 0; i < entries.length; i++) {
             const kp = entries[i];
 
             processed.push(
-                <div style={ this.textStyle } onClick={ (() => this.entrySimilarityQuery(kp.entryid)).bind(this) }>
-                    <span>{ i+1 }. { kp.preview }</span>
+                <div style={ styles.textStyle } onClick={ (() => this.entrySimilarityQuery(kp.entryid)).bind(this) }>
+                    <span>{ this.state.entryIdMap.get(kp.preview) }. { kp.preview }</span>
                 </div>
             );
+        }
+
+        if (processed.length === 0) {
+            processed = (<div style={ styles.textStyle }>{ `There's nothing here...` }</div>);
         }
 
         return processed;

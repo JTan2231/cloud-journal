@@ -159,3 +159,10 @@ export const simResultsBox = Object.assign({}, resultsBox, {
     width: 'calc(75% - 3em)',
     height: 'calc(100% - 2em)',
 });
+
+export const textStyle = {
+    margin: '1em',
+    color: 'rgb(191, 187, 187)',
+    fontFamily: 'Courier New',
+    fontSize: '14px',
+};
