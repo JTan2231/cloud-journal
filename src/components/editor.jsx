@@ -110,8 +110,9 @@ export default class Editor extends React.Component {
             let entries = res.map(kp => ({ entryid: kp.id, preview: kp.text_preview }));
 
             let newIdMap = new Map();
-            for (const e of entries) {
-                newIdMap.set(e.preview, e.entryid);
+            for (let i = 0; i < entries.length; i++) {
+                const e = entries[i];
+                newIdMap.set(e.entryid, i+1);
             }
 
             this.setState({ entryPreviews: entries, entryIdMap: newIdMap });
@@ -167,11 +168,14 @@ export default class Editor extends React.Component {
     formatSimResultsList() {
         let processed = [];
 
+        console.log(this.state.simResults);
+        console.log(this.state.entryIdMap);
+
         for (let i = 0; i < this.state.simResults.length; i++) {
             let res = this.state.simResults[i];
             processed.push(
                 <div style={ this.textStyle }>
-                    <span>{ this.state.entryIdMap.get(res.text_preview) }. { res.text_preview }</span>
+                    <span>{ this.state.entryIdMap.get(res.entryid) }. { res.text_preview }</span>
                 </div>
             );
         }
@@ -190,7 +194,7 @@ export default class Editor extends React.Component {
 
             processed.push(
                 <div style={ styles.textStyle } onClick={ (() => this.entrySimilarityQuery(kp.entryid)).bind(this) }>
-                    <span>{ this.state.entryIdMap.get(kp.preview) }. { kp.preview }</span>
+                    <span>{ this.state.entryIdMap.get(kp.entryid) }. { kp.preview }</span>
                 </div>
             );
         }
