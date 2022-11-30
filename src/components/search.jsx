@@ -16,10 +16,29 @@ export default class Search extends React.Component {
     formatEntryList(entries) {
         var processed = [];
 
+        const entryStyle = Object.assign({}, styles.textStyle, {
+            borderRadius: '0.5em',
+            backgroundColor: 'rgba(136, 136, 136, 0.15)',
+            padding: '0.5em',
+            margin: '0 0 1em 0',
+        });
+
+        const boldStyle = {
+            fontSize: '1.25em',
+            fontWeight: '',
+            color: 'white'
+        };
+
         for (var i = 0; i < entries.length; i++) {
+            let words = entries[i].split(' ');
+            let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
+            words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
+
             processed.push(
-                <div style={ styles.textStyle }>
-                    <span>{ i + 1 }. { entries[i] }</span>
+                <div style={ entryStyle }>
+                    <span>
+                        <span style={ boldStyle }>{ boldWords }</span> { words }
+                    </span>
                 </div>
             );
         }
@@ -110,6 +129,7 @@ export default class Search extends React.Component {
             height: 'calc(100% - 5em)',
             marginTop: '4em',
             overflow: 'scroll',
+            backgroundColor: 'black',
         });
 
         return (

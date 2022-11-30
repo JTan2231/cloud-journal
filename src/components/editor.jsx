@@ -6,6 +6,8 @@ import TypingText from './typing_text.jsx';
 
 import Search from './search.jsx';
 
+import '../styles/scroll.css';
+
 export default class Editor extends React.Component {
     constructor(props) {
         super(props);
@@ -69,7 +71,6 @@ export default class Editor extends React.Component {
          * make whatever REST request needed to login
          * update an unmade div somewhere on the page saying you're logged in as {user}
          * close the login fields
-         * replace login button with logout button
          *
          */
 
@@ -103,6 +104,7 @@ export default class Editor extends React.Component {
 
     userLogout() {
         this.clearInputs();
+        this.wordProcessor.current.clear();
         this.setState({
             loggedInUser: '',
             userid: -1,
@@ -111,6 +113,7 @@ export default class Editor extends React.Component {
             simClicked: false,
             simResults: [],
             searchResults: [],
+            lastSaved: 'unsaved',
         });
     }
 
@@ -180,13 +183,30 @@ export default class Editor extends React.Component {
     }
 
     formatSimResultsList() {
+        const boldStyle = {
+            fontSize: '1.25em',
+            fontWeight: '',
+            color: 'white'
+        };
+
+        const entryStyle = Object.assign({}, styles.textStyle, {
+            borderRadius: '0.5em',
+            backgroundColor: 'rgba(136, 136, 136, 0.15)',
+            padding: '0.5em',
+            margin: '0 0 1em 0',
+        });
+
         let processed = [];
 
         for (let i = 0; i < this.state.simResults.length; i++) {
             let res = this.state.simResults[i];
+            let words = res.text_preview.split(' ');
+            let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
+            words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
+
             processed.push(
-                <div style={ styles.textStyle }>
-                    <span>{ this.state.entryIdMap.get(res.entryid) }. { res.text_preview }</span>
+                <div style={ entryStyle }>
+                    <span style={ boldStyle }>{ boldWords }</span> { words }
                 </div>
             );
         }
@@ -199,13 +219,30 @@ export default class Editor extends React.Component {
     }
 
     similarityEntryListFormat(entries) {
+        const boldStyle = {
+            fontSize: '1.25em',
+            fontWeight: '',
+            color: 'white'
+        };
+
+        const entryStyle = Object.assign({}, styles.textStyle, {
+            borderRadius: '0.5em',
+            backgroundColor: 'rgba(136, 136, 136, 0.1)',
+            padding: '0.5em',
+            margin: '0 0 1em 0',
+        });
+
         let processed = [];
         for (let i = 0; i < entries.length; i++) {
             const kp = entries[i];
 
+            let words = kp.preview.split(' ');
+            let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
+            words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
+
             processed.push(
-                <div style={ styles.textStyle } onClick={ (() => this.entrySimilarityQuery(kp.entryid)).bind(this) }>
-                    <span>{ this.state.entryIdMap.get(kp.entryid) }. { kp.preview }</span>
+                <div style={ entryStyle } onClick={ (() => this.entrySimilarityQuery(kp.entryid)).bind(this) }>
+                    <span style={ boldStyle }>{ boldWords }</span> { words }
                 </div>
             );
         }
@@ -516,7 +553,7 @@ export default class Editor extends React.Component {
                 { /* SIMILARITY BOX */ }
 
                 <div style={ simResults }>
-                    <div style={ styles.boxSimResults }>
+                    <div className="scrollBar" style={ styles.boxSimResults }>
                         { this.similarityEntryListFormat(this.state.entryPreviews) }
                     </div>
                     <div style={ styles.simResultsBox }>

@@ -95,7 +95,7 @@ export default class TypingText extends React.Component {
         if (clock - this.build_frequency === 0) {
             let firstIdx = this.findFirstDifference(text, this.state.title);
 
-            if (!this.state.built && firstIdx === this.state.build_index) {
+            if (firstIdx === this.state.build_index) {
                 this.buildText();
                 return;
             }

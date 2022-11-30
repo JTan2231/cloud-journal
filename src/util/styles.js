@@ -152,6 +152,7 @@ export const resultsBox = Object.assign({}, boxSearch, {
 export const boxSimResults = Object.assign({}, boxSearch, {
     height: 'calc(100% - 2em)',
     width: '25%',
+    backgroundColor: 'transparent',
 });
 
 export const simResultsBox = Object.assign({}, resultsBox, {
@@ -160,6 +161,7 @@ export const simResultsBox = Object.assign({}, resultsBox, {
     left: 'calc(25% + 1em)',
     width: 'calc(75% - 3em)',
     height: 'calc(100% - 2em)',
+    backgroundColor: 'black',
 });
 
 export const textStyle = {
