@@ -91,10 +91,6 @@ export default class WordProcessor extends React.Component {
     }
 
     editorKeyPress() {
-        console.log(this.textbox.current.innerHTML.length);
-        console.log(this.textbox.current.innerHTML);
-        console.log(this.state.prompt);
-
         if (this.textbox.current.innerHTML === '<br>') {
             this.clear();
         }
