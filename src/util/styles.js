@@ -40,9 +40,11 @@ export const item = {
 };
 
 export const transition = c => ({
-    transition: 'height 0.5s',
+    transition: 'height 0.5s, opacity 0.5s, visibility 0.5s',
     height: c ? '1.75em' : '0',
     pointerEvents: c ? '' : 'none',
+    visibility: c ? 'visible' : 'hidden',
+    opacity: c ? '1' : '0',
 });
 
 export const loginInputBox = Object.assign({

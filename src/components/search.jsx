@@ -8,6 +8,8 @@ export default class Search extends React.Component {
 
         this.state = {};
 
+        this.searchDefault = (<div style={ styles.textStyle }>{ `Search through your saved entries.` }</div>);
+
         this.searchInput = React.createRef();
     }
 
@@ -41,7 +43,7 @@ export default class Search extends React.Component {
             previews = this.formatEntryList(previews);
             
             if (previews.length === 0) {
-                previews = (<div style={ styles.textStyle }>{ `There's nothing here...` }</div>);
+                previews = this.searchDefault;
             }
 
             this.setState({ searchResults: previews });
@@ -52,6 +54,10 @@ export default class Search extends React.Component {
         if (e.key === 'Enter') {
             this.entryQuery();
         }
+    }
+
+    clearResults() {
+        this.setState({ searchResults: this.searchDefault });
     }
 
     render() {

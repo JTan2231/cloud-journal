@@ -14,24 +14,20 @@ export default class Editor extends React.Component {
             loginClicked: false,
             newUserClicked: false,
             simClicked: false,
+            channelClicked: false,
+            importStatus: '',
             loggedInUser: '',
             userid: -1,
             entryid: -1,
             loginError: false,
             newUserError: false,
+            channelError: false,
             lastSaved: '',
             searchClicked: false,
             searchResults: [],
             entryPreviews: [],
             simResults: [],
             entryIdMap: new Map(),
-        };
-
-        this.textStyle = {
-            margin: '1em',
-            color: 'rgb(191, 187, 187)',
-            fontFamily: 'Courier New',
-            fontSize: '14px',
         };
 
         this.wordProcessor = React.createRef();
@@ -43,6 +39,10 @@ export default class Editor extends React.Component {
         this.newPasswordInput = React.createRef();
 
         this.searchInput = React.createRef();
+        this.searchBox = React.createRef();
+
+        this.arenaChannelInput = React.createRef();
+        this.importStatus = React.createRef();
     }
 
     clearInputs() {
@@ -50,6 +50,10 @@ export default class Editor extends React.Component {
         this.passwordInput.current.value = '';
         this.newUsernameInput.current.value = '';
         this.newPasswordInput.current.value = '';
+
+        if (this.searchInput.current) {
+            this.searchInput.current.value = '';
+        }
     }
 
     userLoginAttempt() {
@@ -91,12 +95,15 @@ export default class Editor extends React.Component {
     }
 
     userLogout() {
+        this.clearInputs();
         this.setState({
             loggedInUser: '',
             userid: -1,
             loginError: false,
             searchClicked: false,
             simClicked: false,
+            simResults: [],
+            searchResults: [],
         });
     }
 
@@ -156,7 +163,7 @@ export default class Editor extends React.Component {
 
         for (let i = 0; i < indices.length; i++) {
             processed.push(
-                <div style={ this.textStyle }>
+                <div style={ styles.textStyle }>
                     <span>{ indices[i]+1 }. { entries[indices[i]].preview }</span>
                 </div>
             );
@@ -168,20 +175,17 @@ export default class Editor extends React.Component {
     formatSimResultsList() {
         let processed = [];
 
-        console.log(this.state.simResults);
-        console.log(this.state.entryIdMap);
-
         for (let i = 0; i < this.state.simResults.length; i++) {
             let res = this.state.simResults[i];
             processed.push(
-                <div style={ this.textStyle }>
+                <div style={ styles.textStyle }>
                     <span>{ this.state.entryIdMap.get(res.entryid) }. { res.text_preview }</span>
                 </div>
             );
         }
 
         if (processed.length === 0) {
-            processed = (<div style={ styles.textStyle }>{ `There's nothing here...` }</div>);
+            processed = (<div style={ styles.textStyle }>{ `Click an entry on the left to see the rest of your entries ranked in order of relevance.` }</div>);
         }
 
         return processed;
@@ -230,6 +234,31 @@ export default class Editor extends React.Component {
         });
     }
 
+    arenaChannelImport() {
+        let channel = this.arenaChannelInput.current.value.split('/');
+        channel = channel[channel.length-1];
+
+        fetch(config.API_ROOT + 'imports/', {
+            method: 'POST',
+            body: JSON.stringify({
+                user_id: this.state.userid,
+                channel: channel,
+            }),
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(res => res.json()).then(res => {
+            if (res.errors) {
+                this.setState({ importStatus: 'error' });
+                this.importStatus.current.textContent = res.errors;
+            }
+            else {
+                this.setState({ importStatus: 'success' });
+                this.importStatus.current.textContent = res;
+            }
+        });
+    }
+
     loggedInTextChange(text) {
         return function() {
             this.setState({ title: text });
@@ -251,6 +280,12 @@ export default class Editor extends React.Component {
     searchKeyPress(e) {
         if (e.key === 'Enter') {
             this.entryQuery();
+        }
+    }
+
+    arenaChannelKeyPress(e) {
+        if (e.key === 'Enter') {
+            this.arenaChannelImport();
         }
     }
 
@@ -303,25 +338,43 @@ export default class Editor extends React.Component {
         }
     }
 
-    searchButtonClick() {
-        this.setState({
+    toggleSearchState() {
+        return {
             searchClicked: !this.state.searchClicked,
-            simClicked: false,
-        });
+            searchResults: this.state.searchClicked ? [] : this.state.searchResults,
+        };
+    }
+
+    searchButtonClick() {
+        let newState = this.toggleSearchState();
+        if (this.state.simClicked) {
+            newState = Object.assign(newState, this.toggleSimState());
+        }
+
+        this.setState(newState);
 
         this.searchInput.current.focus();
         this.searchInput.current.select();
     }
 
+    toggleSimState() {
+        return {
+            simClicked: !this.state.simClicked,
+            simResults: this.state.simClicked ? [] : this.state.simResults
+        };
+    }
+
     simButtonClick() {
+        let newState = this.toggleSimState();
         if (!this.state.simClicked) {
             this.getEntries(this.state.userid)
         }
 
-        this.setState({
-            simClicked: !this.state.simClicked,
-            searchClicked: false,
-        });
+        if (this.state.searchClicked) {
+            newState = Object.assign(newState, this.toggleSearchState());
+        }
+
+        this.setState(newState);
     }
 
     loginButtonClick() {
@@ -367,6 +420,15 @@ export default class Editor extends React.Component {
         this.wordProcessor.current.clear();
     }
 
+    importChannelClick() {
+        if (this.state.channelClicked) {
+            this.importStatus.current.textContent = '';
+            this.arenaChannelInput.current.value = '';
+        }
+
+        this.setState({ channelClicked: !this.state.channelClicked });
+    }
+
     addLoginConditions(styleArray, transitionCond, errorCond) {
         let newStyleArray = styleArray.map(style => Object.assign({}, style, styles.transition(transitionCond)));
 
@@ -381,9 +443,12 @@ export default class Editor extends React.Component {
         return Object.assign({}, style, { display: cond ? '' : 'none' });
     }
 
+    // TODO: This function is disgusting looking. Needs to be cleaned.
+    //       Some of these can probably be offloaded into other components.
     render() {
         const loginCond = this.state.loginClicked && this.state.loggedInUser.length === 0;
         const newUserCond = this.state.newUserClicked && this.state.loggedInUser.length === 0;
+        const channelCond = this.state.channelClicked && this.state.loggedInUser.length > 0;
 
         const [ loginInputBox,
                 loginInput,
@@ -395,6 +460,10 @@ export default class Editor extends React.Component {
                 newUserButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
                                                           newUserCond, this.state.newUserError);
 
+        const [ channelInputBox,
+                channelInput,
+                channelButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
+                                                          channelCond, this.state.channelError);
 
         const searchResults = this.addDisplay(styles.searchResults, this.state.searchClicked);
         const simResults = this.addDisplay(styles.searchResults, this.state.simClicked);
@@ -407,17 +476,33 @@ export default class Editor extends React.Component {
             searchClicked: this.state.searchClicked,
         };
 
+        if (!searchProps.searchClicked && this.searchBox.current) {
+            this.searchBox.current.clearResults();
+        }
+
         const newUserStyle = Object.assign({}, styles.item, { display: this.state.loggedInUser.length > 0 ? 'none' : '' });
 
         const loggedInStyles = Object.assign({}, styles.item, { display: this.state.loggedInUser.length > 0 ? '' : 'none' });
  
+        const loginGroupStyle = {
+            margin: '1em auto',
+            position: 'absolute',
+            zIndex: this.state.loginClicked ? 100 : -100,
+        };
+
+        const newUserGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.newUserClicked ? 100 : -100 });
+        const channelGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.channelClicked ? 100 : -100 });
+
+        const importStatusStyle = Object.assign({}, styles.textStyle, {
+            color: this.state.importStatus === 'success' ? 'green' : 'red',
+        });
 
         return (
             <div>
 
                 { /* SEARCH BOX */ }
 
-                <Search { ...searchProps } />
+                <Search ref={ this.searchBox } { ...searchProps } />
 
                 { /* END SEARCH BOX */ }
 
@@ -449,19 +534,26 @@ export default class Editor extends React.Component {
 
                 <div style={ styles.position }>
                     <div style={ styles.options }>
-                        <span style={ newUserStyle } onClick={ this.newUserClick.bind(this) }>new user</span>
-                        <span style={ styles.item } onClick={ this.loginButtonClick.bind(this) }>
-                            { this.state.loggedInUser.length > 0 ? 'logout' : 'login' }
-                        </span>
-                        <span style={ loggedInStyles } onClick={ this.newEntryClick.bind(this) }>new entry</span>
-                        <span style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
-                        <span style={ loggedInStyles } onClick={ this.searchButtonClick.bind(this) }>search</span>
-                        <span style={ loggedInStyles } onClick={ this.simButtonClick.bind(this) }>similarities</span>
+                        <div>
+                            <span style={ newUserStyle } onClick={ this.newUserClick.bind(this) }>new user</span>
+                            <span style={ styles.item } onClick={ this.loginButtonClick.bind(this) }>
+                                { this.state.loggedInUser.length > 0 ? 'logout' : 'login' }
+                            </span>
+                            <span style={ loggedInStyles } onClick={ this.newEntryClick.bind(this) }>new entry</span>
+                            <span style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
+                            <span style={ loggedInStyles } onClick={ this.searchButtonClick.bind(this) }>search</span>
+                            <span style={ loggedInStyles } onClick={ this.simButtonClick.bind(this) }>similarities</span>
+                        </div>
+                        <div style={{ marginTop: this.state.userid === -1 ? '' : '0.5em' }}>
+                            <span style={ loggedInStyles } onClick={ this.importChannelClick.bind(this) }>import</span>
+                        </div>
                     </div>
+
+                    { /* TODO: Make these into components */ }
 
                     { /* LOGIN FIELDS */ }
 
-                    <div style={{ margin: '1em' }}>
+                    <div style={ loginGroupStyle }>
                         <div tabIndex="-1" style={ loginInputBox }>
                             <input type="text" ref={ this.usernameInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="username" style={ loginInput } />
                         </div>
@@ -477,7 +569,7 @@ export default class Editor extends React.Component {
 
                     { /* NEW USER FIELDS */ }
 
-                    <div style={{ margin: '2.5em 1em' }}>
+                    <div style={ newUserGroupStyle }>
                         <div tabIndex="-1" style={ newUserInputBox }>
                             <input type="text" ref={ this.newUsernameInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new username" style={ newUserInput } />
                         </div>
@@ -490,6 +582,17 @@ export default class Editor extends React.Component {
                     </div>
 
                     { /* END NEW USER FIELDS */ }
+
+                    { /* IMPORT FIELDS */ }
+
+                    <div style={ channelGroupStyle }>
+                        <span><div tabIndex="-1" style={ channelInputBox }>
+                            <input type="text" ref={ this.arenaChannelInput } onKeyPress={ this.arenaChannelKeyPress.bind(this) } placeholder="are.na channel url" style={ channelInput } />
+                        </div></span>
+                        <span ref={ this.importStatus } style={ importStatusStyle } />
+                    </div>
+
+                    { /* END IMPORT FIELDS */ }
 
                 </div>
 
