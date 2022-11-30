@@ -98,7 +98,6 @@ export const time = {
     margin: '1em',
     fontFamily: fontFamily,
     zIndex: 2,
-    color: 'green',
 };
 
 export const caret = {
@@ -109,6 +108,7 @@ export const caret = {
     fontFamily: fontFamily,
     zIndex: 2,
     margin: '4.3em 1.5em',
+    userSelect: 'none',
 };
 
 export const searchResults = {

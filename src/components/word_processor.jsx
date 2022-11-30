@@ -1,4 +1,5 @@
 import React from 'react';
+import * as styles from '../util/styles.js';
 
 // TODO: text formatting
 export default class WordProcessor extends React.Component {
@@ -6,7 +7,8 @@ export default class WordProcessor extends React.Component {
         super(props);
 
         this.state = {
-            currentSelection: null
+            currentSelection: null,
+            prompt: 'type or paste content',
         };
 
         this.currentSelection = null;
@@ -88,6 +90,24 @@ export default class WordProcessor extends React.Component {
         this.textbox.current.innerHTML = '';
     }
 
+    editorKeyPress() {
+        console.log(this.textbox.current.innerHTML.length);
+        console.log(this.textbox.current.innerHTML);
+        console.log(this.state.prompt);
+
+        if (this.textbox.current.innerHTML === '<br>') {
+            this.clear();
+        }
+
+        const defaultPrompt = 'type or paste content';
+        if (this.textbox.current.innerHTML.length === 0) {
+            this.setState({ prompt: defaultPrompt });
+        }
+        else if (this.state.prompt === defaultPrompt) {
+            this.setState({ prompt: '' });
+        }
+    }
+
     render() {
         const outerStyle = {
             position: 'relative',
@@ -112,8 +132,12 @@ export default class WordProcessor extends React.Component {
 
         return (
             <div style={ outerStyle } onClick={ this.focusTextbox.bind(this) }>
+                <div style={ styles.caret }>
+                    <span>> </span>
+                    <span>{ this.state.prompt }</span>
+                </div>
                 <div id="textbox" tabIndex="0" ref={ this.textbox } style={ innerStyle } 
-                     contentEditable="true">
+                     contentEditable="true" onKeyUp={ this.editorKeyPress.bind(this) }>
                 </div>
             </div>
         );

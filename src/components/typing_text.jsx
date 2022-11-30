@@ -115,7 +115,7 @@ export default class TypingText extends React.Component {
         let newState = {
             text: text,
             clock: clock,
-            color: text.length > 0 && text[0] !== 'n' ? 'green' : 'grey',
+            color: text.length > 0 ? (this.props.red ? 'red' : 'green') : 'grey',
         };
 
         this.setState(newState);

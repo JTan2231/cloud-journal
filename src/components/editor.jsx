@@ -22,15 +22,18 @@ export default class Editor extends React.Component {
             loginError: false,
             newUserError: false,
             channelError: false,
-            lastSaved: '',
+            lastSaved: 'unsaved',
             searchClicked: false,
             searchResults: [],
             entryPreviews: [],
             simResults: [],
             entryIdMap: new Map(),
+            mounted: false,
         };
 
         this.wordProcessor = React.createRef();
+
+        this.editorPrompt = React.createRef();
 
         this.usernameInput = React.createRef();
         this.passwordInput = React.createRef();
@@ -43,6 +46,10 @@ export default class Editor extends React.Component {
 
         this.arenaChannelInput = React.createRef();
         this.importStatus = React.createRef();
+    }
+
+    componentDidMount() {
+        this.wordProcessor.current.clear();
     }
 
     clearInputs() {
@@ -388,7 +395,7 @@ export default class Editor extends React.Component {
             };
 
             if (this.state.newUserClicked) {
-                Object.assign(newState, { newUserClicked: !this.state.newUserClicked, newUserError: false });
+                newState = Object.assign(newState, { newUserClicked: !this.state.newUserClicked, newUserError: false });
             }
 
             this.setState(newState);
@@ -416,7 +423,7 @@ export default class Editor extends React.Component {
     }
 
     newEntryClick() {
-        this.setState({ entryid: -1, lastSaved: '' });
+        this.setState({ entryid: -1, lastSaved: 'unsaved' });
         this.wordProcessor.current.clear();
     }
 
@@ -521,10 +528,9 @@ export default class Editor extends React.Component {
 
                 { /* HEADER */ }
 
-                <div style={ styles.caret }>></div>
-                <TypingText text={ typingTextValue } compareAll={ true } style={ styles.typingText } />
+                <TypingText text={ typingTextValue } red={ this.state.userid === -1 } compareAll={ true } style={ styles.typingText } />
                 <TypingText text="last saved: " style={ styles.lastSaved } />
-                <TypingText text={ this.state.lastSaved } compareAll={ true } style={ styles.time } />
+                <TypingText text={ this.state.lastSaved } red={ this.state.lastSaved === 'unsaved' } compareAll={ true } style={ styles.time } />
 
                 { /* END HEADER */ }
 
