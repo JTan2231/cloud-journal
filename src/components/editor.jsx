@@ -12,11 +12,15 @@ export default class Editor extends React.Component {
     constructor(props) {
         super(props);
 
+        // TODO
+        // clean this up
+        // this is disgusting
         this.state = {
             loginClicked: false,
             newUserClicked: false,
             simClicked: false,
             channelClicked: false,
+            exportClicked: false,
             importStatus: '',
             loggedInUser: '',
             userid: -1,
@@ -464,13 +468,63 @@ export default class Editor extends React.Component {
         this.wordProcessor.current.clear();
     }
 
+    clearImportChannelFields() {
+        this.importStatus.current.textContent = '';
+        this.arenaChannelInput.current.value = '';
+    }
+
     importChannelClick() {
+        let newState = {
+            channelClicked: !this.state.channelClicked,
+        };
+
         if (this.state.channelClicked) {
-            this.importStatus.current.textContent = '';
-            this.arenaChannelInput.current.value = '';
+            this.clearImportChannelFields();
         }
 
-        this.setState({ channelClicked: !this.state.channelClicked });
+        if (this.state.exportClicked) {
+            newState.exportClicked = false;
+        }
+
+        this.setState(newState);
+    }
+
+    exportButtonClick() {
+        let newState = {
+            exportClicked: !this.state.exportClicked,
+        };
+
+        if (this.state.channelClicked) {
+            newState.channelClicked = false;
+            this.clearImportChannelFields();
+        }
+
+        this.setState(newState);
+    }
+
+    exportEntriesTypeWrapper(type) {
+        return function() { this.exportEntries(type) };
+    }
+
+    exportEntries(type) {
+        console.log(type);
+        fetch(config.API_ROOT + 'exports/?user_id=' + this.state.userid + '&type=' + type, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/zip',
+            }
+        }).then(res => res.blob()).then(blob => {
+            let file = window.URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = file;
+
+            let date = new Date();
+            anchor.download = this.state.loggedInUser + '_' + date.toLocaleDateString() + '.zip';// + date.getMonth() + date.getDay() + date.getFullYear() + '.zip';
+
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+        });
     }
 
     addLoginConditions(styleArray, transitionCond, errorCond) {
@@ -493,6 +547,7 @@ export default class Editor extends React.Component {
         const loginCond = this.state.loginClicked && this.state.loggedInUser.length === 0;
         const newUserCond = this.state.newUserClicked && this.state.loggedInUser.length === 0;
         const channelCond = this.state.channelClicked && this.state.loggedInUser.length > 0;
+        const exportCond = this.state.exportClicked && this.state.loggedInUser.length > 0;
 
         const [ loginInputBox,
                 loginInput,
@@ -508,6 +563,11 @@ export default class Editor extends React.Component {
                 channelInput,
                 channelButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
                                                           channelCond, this.state.channelError);
+
+        const [ exportInputBox,
+                exportInput,
+                exportButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
+                                                          exportCond, false);
 
         const searchResults = this.addDisplay(styles.searchResults, this.state.searchClicked);
         const simResults = this.addDisplay(styles.searchResults, this.state.simClicked);
@@ -536,6 +596,7 @@ export default class Editor extends React.Component {
 
         const newUserGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.newUserClicked ? 100 : -100 });
         const channelGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.channelClicked ? 100 : -100 });
+        const exportGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.exportClicked ? 100 : -100 });
 
         const importStatusStyle = Object.assign({}, styles.textStyle, {
             color: this.state.importStatus === 'success' ? 'green' : 'red',
@@ -589,6 +650,7 @@ export default class Editor extends React.Component {
                         </div>
                         <div style={{ marginTop: this.state.userid === -1 ? '' : '0.5em' }}>
                             <span style={ loggedInStyles } onClick={ this.importChannelClick.bind(this) }>import</span>
+                            <span style={ loggedInStyles } onClick={ this.exportButtonClick.bind(this) }>export</span>
                         </div>
                     </div>
 
@@ -636,6 +698,23 @@ export default class Editor extends React.Component {
                     </div>
 
                     { /* END IMPORT FIELDS */ }
+
+                    { /* EXPORT FIELDS */ }
+
+                    <div style={ exportGroupStyle }>
+                        <span>
+                            <div style={ Object.assign({}, exportButton, { height: '', padding: '0.5em' }) }
+                                 onClick={ (this.exportEntriesTypeWrapper('raw')).bind(this) }>
+                                raw
+                            </div>
+                            <div style={ Object.assign({}, exportButton, { height: '', padding: '0.5em' }) }
+                                 onClick={ (this.exportEntriesTypeWrapper('text')).bind(this) }>
+                                text
+                            </div>
+                        </span>
+                    </div>
+
+                    { /* END EXPORT FIELDS */ }
 
                 </div>
 
