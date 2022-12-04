@@ -6,8 +6,6 @@ import TypingText from './typing_text.jsx';
 
 import Search from './search.jsx';
 
-import '../styles/scroll.css';
-
 export default class Editor extends React.Component {
     constructor(props) {
         super(props);

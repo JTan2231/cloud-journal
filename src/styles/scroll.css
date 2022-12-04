@@ -1,9 +1,0 @@
-.hideScroll {
-    display: none;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.hideScroll::-webkit-scrollbar {
-    width: 0;
-}

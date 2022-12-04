@@ -2,6 +2,8 @@ import * as config from '../util/config.js';
 import * as styles from '../util/styles.js';
 import React from 'react';
 
+import '../styles/search_item.css';
+
 export default class Search extends React.Component {
     constructor(props) {
         super(props);
@@ -14,13 +16,17 @@ export default class Search extends React.Component {
     }
 
     formatEntryList(entries) {
-        var processed = [];
-
+        const margin = 0.5;
+        const padding = 0.5;
         const entryStyle = Object.assign({}, styles.textStyle, {
             borderRadius: '0.5em',
-            backgroundColor: 'rgba(136, 136, 136, 0.15)',
-            padding: '0.5em',
-            margin: '0 0 1em 0',
+            padding: `${padding}em`,
+            margin: `${margin}em`,
+            height: '10em',
+            maxWidth: `calc(25% - ${2*margin + 2*padding}em)`,
+            flexBasis: `calc(25% - ${2*margin + 2*padding}em)`,
+            overflowY: 'hidden',
+            textOverflow: 'ellipsis',
         });
 
         const boldStyle = {
@@ -29,13 +35,14 @@ export default class Search extends React.Component {
             color: 'white'
         };
 
+        let processed = [];
         for (var i = 0; i < entries.length; i++) {
             let words = entries[i].split(' ');
             let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
             words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
 
             processed.push(
-                <div style={ entryStyle }>
+                <div class="searchItem" style={ entryStyle }>
                     <span>
                         <span style={ boldStyle }>{ boldWords }</span> { words }
                     </span>
@@ -55,7 +62,7 @@ export default class Search extends React.Component {
                 'Content-Type': 'application/json',
             }
         }).then(res => res.json()).then(res => res.map(r => ({
-            id: r.id - 1,
+            id: r.id,
             preview: r.text_preview
         }))).then(res => {
             let previews = res.map(r => r.preview);
@@ -126,10 +133,14 @@ export default class Search extends React.Component {
         });
 
         const resultsBoxStyle = Object.assign({}, boxSearchStyle, {
-            height: 'calc(100% - 5em)',
+            height: 'calc(100% - 6em)',
+            width: 'calc(100% - 3em',
             marginTop: '4em',
             overflow: 'scroll',
             backgroundColor: 'black',
+            display: 'flex',
+            flexWrap: 'wrap',
+            padding: '0.5em',
         });
 
         return (
