@@ -1,5 +1,5 @@
 .searchItem {
-    transition: background-color 0.5s ease-out;
+    transition: background-color 0.25s ease-out;
     background-color: rgba(136, 136, 136, 0.27);
 }
 
