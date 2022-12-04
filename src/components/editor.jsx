@@ -6,6 +6,9 @@ import TypingText from './typing_text.jsx';
 
 import Search from './search.jsx';
 
+import '../styles/menu_item.css';
+import '../styles/search_item.css';
+
 export default class Editor extends React.Component {
     constructor(props) {
         super(props);
@@ -191,11 +194,16 @@ export default class Editor extends React.Component {
             color: 'white'
         };
 
+        const margin = 0.5;
+        const padding = 0.5;
         const entryStyle = Object.assign({}, styles.textStyle, {
             borderRadius: '0.5em',
-            backgroundColor: 'rgba(136, 136, 136, 0.15)',
-            padding: '0.5em',
-            margin: '0 0 1em 0',
+            padding: `${padding}em`,
+            margin: `${margin}em`,
+            maxWidth: `calc(33% - ${2*margin + 2*padding}em)`,
+            flexBasis: `calc(33% - ${2*margin + 2*padding}em)`,
+            height: '10em',
+            overflow: 'hidden',
         });
 
         let processed = [];
@@ -207,7 +215,7 @@ export default class Editor extends React.Component {
             words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
 
             processed.push(
-                <div style={ entryStyle }>
+                <div class="searchItem" style={ entryStyle }>
                     <span style={ boldStyle }>{ boldWords }</span> { words }
                 </div>
             );
@@ -229,7 +237,6 @@ export default class Editor extends React.Component {
 
         const entryStyle = Object.assign({}, styles.textStyle, {
             borderRadius: '0.5em',
-            backgroundColor: 'rgba(136, 136, 136, 0.1)',
             padding: '0.5em',
             margin: '0 0 1em 0',
         });
@@ -243,7 +250,7 @@ export default class Editor extends React.Component {
             words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
 
             processed.push(
-                <div style={ entryStyle } onClick={ (() => this.entrySimilarityQuery(kp.entryid)).bind(this) }>
+                <div class="searchItem" style={ entryStyle } onClick={ (() => this.entrySimilarityQuery(kp.entryid)).bind(this) }>
                     <span style={ boldStyle }>{ boldWords }</span> { words }
                 </div>
             );
@@ -637,18 +644,18 @@ export default class Editor extends React.Component {
                 <div style={ styles.position }>
                     <div style={ styles.options }>
                         <div>
-                            <span style={ newUserStyle } onClick={ this.newUserClick.bind(this) }>new user</span>
-                            <span style={ styles.item } onClick={ this.loginButtonClick.bind(this) }>
+                            <span class="menuItem" style={ newUserStyle } onClick={ this.newUserClick.bind(this) }>new user</span>
+                            <span class="menuItem" style={ styles.item } onClick={ this.loginButtonClick.bind(this) }>
                                 { this.state.loggedInUser.length > 0 ? 'logout' : 'login' }
                             </span>
-                            <span style={ loggedInStyles } onClick={ this.newEntryClick.bind(this) }>new entry</span>
-                            <span style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
-                            <span style={ loggedInStyles } onClick={ this.searchButtonClick.bind(this) }>search</span>
-                            <span style={ loggedInStyles } onClick={ this.simButtonClick.bind(this) }>similarities</span>
+                            <span class="menuItem" style={ loggedInStyles } onClick={ this.newEntryClick.bind(this) }>new entry</span>
+                            <span class="menuItem" style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
+                            <span class="menuItem" style={ loggedInStyles } onClick={ this.searchButtonClick.bind(this) }>search</span>
+                            <span class="menuItem" style={ loggedInStyles } onClick={ this.simButtonClick.bind(this) }>similarities</span>
                         </div>
                         <div style={{ marginTop: this.state.userid === -1 ? '' : '0.5em' }}>
-                            <span style={ loggedInStyles } onClick={ this.importChannelClick.bind(this) }>import</span>
-                            <span style={ loggedInStyles } onClick={ this.exportButtonClick.bind(this) }>export</span>
+                            <span class="menuItem" style={ loggedInStyles } onClick={ this.importChannelClick.bind(this) }>import</span>
+                            <span class="menuItem" style={ loggedInStyles } onClick={ this.exportButtonClick.bind(this) }>export</span>
                         </div>
                     </div>
 

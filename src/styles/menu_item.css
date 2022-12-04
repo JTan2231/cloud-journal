@@ -1,0 +1,9 @@
+.menuItem {
+    color: rgb(191, 187, 187);
+    transition: color 0.25s;
+}
+
+.menuItem:hover {
+    color: rgb(241, 237, 237);
+    cursor: pointer;
+}

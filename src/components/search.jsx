@@ -25,7 +25,7 @@ export default class Search extends React.Component {
             height: '10em',
             maxWidth: `calc(25% - ${2*margin + 2*padding}em)`,
             flexBasis: `calc(25% - ${2*margin + 2*padding}em)`,
-            overflowY: 'hidden',
+            overflow: 'hidden',
             textOverflow: 'ellipsis',
         });
 
@@ -136,7 +136,7 @@ export default class Search extends React.Component {
             height: 'calc(100% - 6em)',
             width: 'calc(100% - 3em',
             marginTop: '4em',
-            overflow: 'scroll',
+            overflowY: 'scroll',
             backgroundColor: 'black',
             display: 'flex',
             flexWrap: 'wrap',

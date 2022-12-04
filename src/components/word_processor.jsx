@@ -122,6 +122,7 @@ export default class WordProcessor extends React.Component {
             color: 'white',
             fontSize: '14px',
             fontFamily: 'Courier New',
+            minWidth: '2px',
         };
 
         document.body.style.margin = "0";
