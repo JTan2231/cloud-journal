@@ -38,6 +38,10 @@ export default class Editor extends React.Component {
             mounted: false,
         };
 
+        this.setWordProcessorFromSearch = (entryid) => {
+            this.getEntryItemClick(this.state.userid, entryid);
+        };
+
         this.wordProcessor = React.createRef();
 
         this.editorPrompt = React.createRef();
@@ -119,6 +123,21 @@ export default class Editor extends React.Component {
             simResults: [],
             searchResults: [],
             lastSaved: 'unsaved',
+        });
+    }
+
+    getEntryItemClick(userid, entryid) {
+        fetch(`${config.API_ROOT}entries/?user_id=${userid}&id=${entryid}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }).then(res => res.json()).then(res => {
+            this.wordProcessor.current.clear();
+            this.wordProcessor.current.loadHTML(res);
+            this.wordProcessor.current.editorKeyPress();
+
+            this.setState({ entryid: entryid });
         });
     }
 
@@ -214,8 +233,9 @@ export default class Editor extends React.Component {
             let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
             words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
 
+            const id = res.entryid;
             processed.push(
-                <div class="searchItem" style={ entryStyle }>
+                <div class="searchItem" style={ entryStyle } onClick={ () => this.setWordProcessorFromSearch(id) }>
                     <span style={ boldStyle }>{ boldWords }</span> { words }
                 </div>
             );
@@ -404,6 +424,10 @@ export default class Editor extends React.Component {
             newState = Object.assign(newState, this.toggleSimState());
         }
 
+        if (!this.state.searchClicked) {
+            this.searchBox.current.setPreviews();
+        }
+
         this.setState(newState);
 
         this.searchInput.current.focus();
@@ -583,6 +607,7 @@ export default class Editor extends React.Component {
             userid: this.state.userid,
             entryPreviews: this.state.entryPreviews,
             searchClicked: this.state.searchClicked,
+            searchClick: this.setWordProcessorFromSearch,
         };
 
         if (!searchProps.searchClicked && this.searchBox.current) {
@@ -637,7 +662,7 @@ export default class Editor extends React.Component {
 
                 { /* END HEADER */ }
 
-                <WordProcessor ref={ this.wordProcessor } />
+                <WordProcessor ref={ this.wordProcessor }/>
 
                 { /* NAVIGATION BOX */ }
 

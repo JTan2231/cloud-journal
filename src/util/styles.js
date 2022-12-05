@@ -107,7 +107,7 @@ export const caret = {
     color: 'grey',
     fontFamily: fontFamily,
     zIndex: 2,
-    margin: '4.3em 1.5em',
+    margin: '5.1em 1.5em',
     userSelect: 'none',
 };
 

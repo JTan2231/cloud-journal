@@ -37,12 +37,13 @@ export default class Search extends React.Component {
 
         let processed = [];
         for (var i = 0; i < entries.length; i++) {
-            let words = entries[i].split(' ');
+            let words = entries[i].preview.split(' ');
             let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
             words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
 
+            const id = entries[i].id;
             processed.push(
-                <div class="searchItem" style={ entryStyle }>
+                <div class="searchItem" style={ entryStyle } onClick={ () => this.props.searchClick(id) }>
                     <span>
                         <span style={ boldStyle }>{ boldWords }</span> { words }
                     </span>
@@ -65,14 +66,30 @@ export default class Search extends React.Component {
             id: r.id,
             preview: r.text_preview
         }))).then(res => {
-            let previews = res.map(r => r.preview);
-            previews = this.formatEntryList(previews);
+            let previews = this.formatEntryList(res);
             
             if (previews.length === 0) {
-                previews = this.searchDefault;
+                previews = [{
+                    id: 0,
+                    preview: this.searchDefault,
+                }];
             }
 
             this.setState({ searchResults: previews });
+        });
+    }
+
+    setPreviews() {
+        fetch(config.API_ROOT + 'entries/?user_id=' + this.props.userid, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }).then(res => res.json()).then(res => {
+            let entries = res.map(kp => ({ id: kp.id, preview: kp.text_preview }));
+            entries = this.formatEntryList(entries);
+
+            this.setState({ searchResults: entries });
         });
     }
 
