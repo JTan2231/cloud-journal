@@ -13,10 +13,6 @@ export default class Similarities extends React.Component {
         };
     }
 
-    componentDidMount() {
-        //this.setState({ entryPreviews: this.props.entryPreviews });
-    }
-
     entrySimilarityQuery(entryid) {
         fetch(config.API_ROOT + 'queries/?user_id=' + this.props.userid + '&qentry_id=' + entryid, {
             method: 'GET',      

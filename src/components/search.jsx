@@ -10,15 +10,39 @@ export default class Search extends React.Component {
 
         this.state = {};
 
+        this.marginDefault = 0.5;
+        this.paddingDefault = 0.5;
+
         this.searchDefault = (<div style={ styles.textStyle }>{ `Search through your saved entries.` }</div>);
 
         this.searchInput = React.createRef();
+        this.resultsClickDisplay = React.createRef();
     }
 
-    formatEntryList(entries) {
-        const margin = 0.5;
-        const padding = 0.5;
-        const entryStyle = Object.assign({}, styles.textStyle, {
+    searchResultsClick(id) {
+        fetch(`${config.API_ROOT}entries/?user_id=${this.props.userid}&id=${id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }).then(res => res.json()).then(res => {
+            this.setState({
+                resultsClickDisplay: res,
+                currentEntryId: id,
+            });
+        });
+    }
+
+    getResultsStyles(margin, padding) {
+        if (margin === null) {
+            margin = this.marginDefault;
+        }
+
+        if (padding === null) {
+            padding = this.paddingDefault;
+        }
+
+        const containerStyle = Object.assign({}, styles.textStyle, {
             borderRadius: '0.5em',
             padding: `${padding}em`,
             margin: `${margin}em`,
@@ -27,13 +51,21 @@ export default class Search extends React.Component {
             flexBasis: `calc(25% - ${2*margin + 2*padding}em)`,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
+            fontSize: '0.8em',
         });
 
         const boldStyle = {
-            fontSize: '1.25em',
+            fontSize: '1.2em',
             fontWeight: '',
             color: 'white'
         };
+
+        return [ containerStyle, boldStyle ];
+    }
+
+    formatEntryList(entries) {
+        const [ entryStyle,
+                boldStyle ] = this.getResultsStyles(null, null);
 
         let processed = [];
         for (var i = 0; i < entries.length; i++) {
@@ -43,7 +75,7 @@ export default class Search extends React.Component {
 
             const id = entries[i].entryid;
             processed.push(
-                <div class="searchItem" style={ entryStyle } onClick={ () => this.props.searchClick(id) }>
+                <div class="searchItem" style={ entryStyle } onClick={ () => this.searchResultsClick(id) }>
                     <span>
                         <span style={ boldStyle }>{ boldWords }</span> { words }
                     </span>
@@ -63,7 +95,7 @@ export default class Search extends React.Component {
                 'Content-Type': 'application/json',
             }
         }).then(res => res.json()).then(res => res.map(r => ({
-            id: r.id,
+            entryid: r.id,
             preview: r.text_preview
         }))).then(res => {
             let previews = this.formatEntryList(res);
@@ -94,6 +126,18 @@ export default class Search extends React.Component {
 
     clearResults() {
         this.setState({ searchResults: this.searchDefault });
+    }
+
+    returnToResults() {
+        this.setState({
+            resultsClickDisplay: null,
+            currentEntryId: -1,
+        });
+    }
+
+    reset() {
+        this.setPreviews();
+        this.returnToResults();
     }
 
     render() {
@@ -144,12 +188,40 @@ export default class Search extends React.Component {
             height: 'calc(100% - 6em)',
             width: 'calc(100% - 3em',
             marginTop: '4em',
-            overflowY: 'scroll',
             backgroundColor: 'black',
-            display: 'flex',
-            flexWrap: 'wrap',
             padding: '0.5em',
         });
+
+        const resultsClickDisplayToggle = this.state.resultsClickDisplay != null;
+
+        let [ resultsClickDisplayStyle, , ] = this.getResultsStyles(null, null);
+        resultsClickDisplayStyle = Object.assign({}, resultsClickDisplayStyle, {
+            height: `calc(100% - ${2*this.marginDefault + 2*this.paddingDefault}em`,
+            maxWidth: `calc(100% - ${2*this.marginDefault + 2*this.paddingDefault}em`,
+            flexBasis: '',
+            fontSize: '15px',
+        });
+
+        const resultsClickDisplayToggleStyle = {
+            display: resultsClickDisplayToggle ? 'block' : 'none',
+        };
+
+        const goBackButton = Object.assign({}, resultsClickDisplayStyle, {
+            height: '',
+            maxWidth: '',
+            width: 'fit-content',
+        });
+
+        const buttonWrapperStyle = {
+            display: 'flex',
+            justifyContent: 'space-between',
+        };
+
+        const flexWrapperStyle = {
+            flexWrap: 'wrap',
+            overflowY: 'scroll',
+            display: resultsClickDisplayToggle ? 'none' : 'flex',
+        };
 
         return (
             <div style={ searchResults }>
@@ -157,7 +229,18 @@ export default class Search extends React.Component {
                     <input type="text" ref={ this.searchInput } onKeyPress={ this.searchKeyPress.bind(this) } placeholder="search" style={ boxInputStyle } />
                 </div>
                 <div style={ resultsBoxStyle }>
-                    { this.state.searchResults }
+                    <div style={ flexWrapperStyle }>
+                        { this.state.searchResults }
+                    </div>
+
+                    <div style={ resultsClickDisplayToggleStyle }>
+                        <div style={ buttonWrapperStyle }>
+                            <span className="searchItem" style={ goBackButton } onClick={ this.returnToResults.bind(this) }>go back</span>
+                            <span className="searchItem" style={ goBackButton } onClick={ () => this.props.searchClick(this.state.currentEntryId) }>load</span>
+                        </div>
+                        <div ref={ this.resultsClickDisplay } style={ resultsClickDisplayStyle } dangerouslySetInnerHTML={{ __html: this.state.resultsClickDisplay }}>
+                        </div>
+                    </div>
                 </div>
             </div>
         );

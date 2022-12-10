@@ -120,7 +120,7 @@ export default class WordProcessor extends React.Component {
             outline: 'none',
             margin: '6em 3em',
             color: 'white',
-            fontSize: '14px',
+            fontSize: '16px',
             fontFamily: 'Courier New',
             minWidth: '2px',
         };

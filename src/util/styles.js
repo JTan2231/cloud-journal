@@ -111,7 +111,7 @@ export const caret = {
     color: 'grey',
     fontFamily: fontFamily,
     zIndex: 2,
-    margin: '5.1em 1.5em',
+    margin: '6em 1.8em',
     userSelect: 'none',
 };
 
@@ -120,7 +120,7 @@ export const searchResults = {
     width: '60%',
     height: '60%',
     zIndex: 3,
-    backgroundColor: '#51515130',
+    backgroundColor: 'rgb(25, 25, 28)',
     top: 'calc(50vh - 30%)',
     left: 'calc(50vw - 30%)',
     borderRadius: '0.5em',

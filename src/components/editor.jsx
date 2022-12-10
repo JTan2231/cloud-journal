@@ -199,19 +199,6 @@ export default class Editor extends React.Component {
         return processed;
     }
 
-    entryQuery() {
-        const userid = this.state.userid;
-        const query = this.searchInput.current.value;
-        fetch(`${config.API_ROOT}queries/?user_id=${userid}&query=${encodeURIComponent(query)}&return=False`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        }).then(res => res.json()).then(res => res.map(r => r.id - 1)).then(indices => {
-            this.setState({ searchResults: this.formatEntryList(this.state.entryPreviews, indices) });
-        });
-    }
-
     arenaChannelImport() {
         let channel = this.arenaChannelInput.current.value.split('/');
         channel = channel[channel.length-1];
@@ -252,12 +239,6 @@ export default class Editor extends React.Component {
     newUserKeyPress(e) {
         if (e.key === 'Enter') {
             this.createUserAttempt();
-        }
-    }
-
-    searchKeyPress(e) {
-        if (e.key === 'Enter') {
-            this.entryQuery();
         }
     }
 
@@ -321,6 +302,10 @@ export default class Editor extends React.Component {
     }
 
     toggleSearchState() {
+        if (this.state.searchClicked) {
+            this.searchBox.current.reset();
+        }
+
         return {
             searchClicked: !this.state.searchClicked,
             searchResults: this.state.searchClicked ? [] : this.state.searchResults,
@@ -338,9 +323,6 @@ export default class Editor extends React.Component {
         }
 
         this.setState(newState);
-
-        this.searchInput.current.focus();
-        this.searchInput.current.select();
     }
 
     toggleSimState() {
@@ -560,6 +542,7 @@ export default class Editor extends React.Component {
 
                 <WordProcessor ref={ this.wordProcessor }/>
 
+                { /* TODO: Please God make this a separate component */ }
                 { /* NAVIGATION BOX */ }
 
                 <div style={ styles.position }>
@@ -581,7 +564,6 @@ export default class Editor extends React.Component {
                     </div>
 
                     { /* TODO: Make these into components */ }
-
                     { /* LOGIN FIELDS */ }
 
                     <div style={ loginGroupStyle }>
