@@ -41,7 +41,7 @@ export default class Search extends React.Component {
             let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
             words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
 
-            const id = entries[i].id;
+            const id = entries[i].entryid;
             processed.push(
                 <div class="searchItem" style={ entryStyle } onClick={ () => this.props.searchClick(id) }>
                     <span>
@@ -57,7 +57,7 @@ export default class Search extends React.Component {
     entryQuery() {
         const userid = this.props.userid;
         const query = this.searchInput.current.value;
-        fetch(config.API_ROOT + 'queries/' + '?user_id=' + userid + '&query=' + encodeURI(query) + '&return=True', {
+        fetch(`${config.API_ROOT}queries/?user_id=${userid}&query=${encodeURI(query)}&return=True`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -80,17 +80,10 @@ export default class Search extends React.Component {
     }
 
     setPreviews() {
-        fetch(config.API_ROOT + 'entries/?user_id=' + this.props.userid, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }).then(res => res.json()).then(res => {
-            let entries = res.map(kp => ({ id: kp.id, preview: kp.text_preview }));
-            entries = this.formatEntryList(entries);
+        let entries = this.props.entryPreviews;
+        entries = this.formatEntryList(entries);
 
-            this.setState({ searchResults: entries });
-        });
+        this.setState({ searchResults: entries });
     }
 
     searchKeyPress(e) {
@@ -124,7 +117,6 @@ export default class Search extends React.Component {
         const boxSearchStyle = Object.assign({}, boxStyle, {
             margin: '1em',
             transition: '',
-            height: '',
             float: '',
             pointerEvents: '',
             position: 'absolute',
@@ -140,7 +132,6 @@ export default class Search extends React.Component {
             padding: '0.25em 0.5em',
             color: menuTextColor,
             fontFamily: fontFamily,
-            border: 'none',
             outline: 'none',
             backgroundColor: 'transparent',
             height: '',

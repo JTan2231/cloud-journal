@@ -5,6 +5,7 @@ import WordProcessor from './word_processor.jsx';
 import TypingText from './typing_text.jsx';
 
 import Search from './search.jsx';
+import Similarities from './similarities.jsx';
 
 import '../styles/menu_item.css';
 import '../styles/search_item.css';
@@ -75,14 +76,6 @@ export default class Editor extends React.Component {
     }
 
     userLoginAttempt() {
-        /* TODO
-         *
-         * make whatever REST request needed to login
-         * update an unmade div somewhere on the page saying you're logged in as {user}
-         * close the login fields
-         *
-         */
-
         const username = this.usernameInput.current.value;
         fetch(config.API_ROOT + 'authentication/', {
             method: 'POST',
@@ -206,104 +199,16 @@ export default class Editor extends React.Component {
         return processed;
     }
 
-    formatSimResultsList() {
-        const boldStyle = {
-            fontSize: '1.25em',
-            fontWeight: '',
-            color: 'white'
-        };
-
-        const margin = 0.5;
-        const padding = 0.5;
-        const entryStyle = Object.assign({}, styles.textStyle, {
-            borderRadius: '0.5em',
-            padding: `${padding}em`,
-            margin: `${margin}em`,
-            maxWidth: `calc(33% - ${2*margin + 2*padding}em)`,
-            flexBasis: `calc(33% - ${2*margin + 2*padding}em)`,
-            height: '10em',
-            overflow: 'hidden',
-        });
-
-        let processed = [];
-
-        for (let i = 0; i < this.state.simResults.length; i++) {
-            let res = this.state.simResults[i];
-            let words = res.text_preview.split(' ');
-            let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
-            words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
-
-            const id = res.entryid;
-            processed.push(
-                <div class="searchItem" style={ entryStyle } onClick={ () => this.setWordProcessorFromSearch(id) }>
-                    <span style={ boldStyle }>{ boldWords }</span> { words }
-                </div>
-            );
-        }
-
-        if (processed.length === 0) {
-            processed = (<div style={ styles.textStyle }>{ `Click an entry on the left to see the rest of your entries ranked in order of relevance.` }</div>);
-        }
-
-        return processed;
-    }
-
-    similarityEntryListFormat(entries) {
-        const boldStyle = {
-            fontSize: '1.25em',
-            fontWeight: '',
-            color: 'white'
-        };
-
-        const entryStyle = Object.assign({}, styles.textStyle, {
-            borderRadius: '0.5em',
-            padding: '0.5em',
-            margin: '0 0 1em 0',
-        });
-
-        let processed = [];
-        for (let i = 0; i < entries.length; i++) {
-            const kp = entries[i];
-
-            let words = kp.preview.split(' ');
-            let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
-            words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
-
-            processed.push(
-                <div class="searchItem" style={ entryStyle } onClick={ (() => this.entrySimilarityQuery(kp.entryid)).bind(this) }>
-                    <span style={ boldStyle }>{ boldWords }</span> { words }
-                </div>
-            );
-        }
-
-        if (processed.length === 0) {
-            processed = (<div style={ styles.textStyle }>{ `There's nothing here...` }</div>);
-        }
-
-        return processed;
-    }
-
     entryQuery() {
         const userid = this.state.userid;
         const query = this.searchInput.current.value;
-        fetch(config.API_ROOT + 'queries/' + '?user_id=' + userid + '&query=' + encodeURIComponent(query) + '&return=False', {
+        fetch(`${config.API_ROOT}queries/?user_id=${userid}&query=${encodeURIComponent(query)}&return=False`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             }
         }).then(res => res.json()).then(res => res.map(r => r.id - 1)).then(indices => {
             this.setState({ searchResults: this.formatEntryList(this.state.entryPreviews, indices) });
-        });
-    }
-
-    entrySimilarityQuery(entryid) {
-        fetch(config.API_ROOT + 'queries/?user_id=' + this.state.userid + '&qentry_id=' + entryid, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        }).then(res => res.json()).then(res => {
-            this.setState({ simResults: res });
         });
     }
 
@@ -382,6 +287,8 @@ export default class Editor extends React.Component {
                         'Content-Type': 'application/json',
                     }
                 }).then(res => res.json()).then(res => {
+                    // TODO: Make this happen with the initial request
+                    this.getEntries(this.state.userid);
                     this.setState({
                         entryid: res.entry_id,
                         lastSaved: new Date().toLocaleString(),
@@ -399,6 +306,8 @@ export default class Editor extends React.Component {
                         'Content-Type': 'application/json',
                     }
                 }).then(res => {
+                    // TODO: Make this happen with the initial request
+                    this.getEntries(this.state.userid);
                     this.setState({ lastSaved: new Date().toLocaleString() });
                 });
             }
@@ -556,7 +465,8 @@ export default class Editor extends React.Component {
         });
     }
 
-    addLoginConditions(styleArray, transitionCond, errorCond) {
+    createLoginFieldStyles(transitionCond, errorCond) {
+        let styleArray = [styles.loginInputBox, styles.loginInput, styles.loginButton];
         let newStyleArray = styleArray.map(style => Object.assign({}, style, styles.transition(transitionCond)));
 
         newStyleArray = newStyleArray.map(style => Object.assign({}, style, { border: 'none' }));
@@ -564,10 +474,6 @@ export default class Editor extends React.Component {
         newStyleArray[0] = Object.assign({}, newStyleArray[0], { border: errorCond ? '1px solid red' : 'none' });
 
         return newStyleArray;
-    }
-
-    addDisplay(style, cond) {
-        return Object.assign({}, style, { display: cond ? '' : 'none' });
     }
 
     // TODO: This function is disgusting looking. Needs to be cleaned.
@@ -580,26 +486,16 @@ export default class Editor extends React.Component {
 
         const [ loginInputBox,
                 loginInput,
-                loginButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
-                                                        loginCond, this.state.loginError);
+                loginButton ] = this.createLoginFieldStyles(loginCond, this.state.loginError);
 
         const [ newUserInputBox,
                 newUserInput,
-                newUserButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
-                                                          newUserCond, this.state.newUserError);
+                newUserButton ] = this.createLoginFieldStyles(newUserCond, this.state.newUserError);
 
         const [ channelInputBox,
-                channelInput,
-                channelButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
-                                                          channelCond, this.state.channelError);
+                channelInput, , ] = this.createLoginFieldStyles(channelCond, this.state.channelError);
 
-        const [ exportInputBox,
-                exportInput,
-                exportButton ] = this.addLoginConditions([styles.loginInputBox, styles.loginInput, styles.loginButton],
-                                                          exportCond, false);
-
-        const searchResults = this.addDisplay(styles.searchResults, this.state.searchClicked);
-        const simResults = this.addDisplay(styles.searchResults, this.state.simClicked);
+        const [ , , exportButton ] = this.createLoginFieldStyles(exportCond, false);
 
         const typingTextValue = this.state.loggedInUser.length > 0 ? 'logged in as ' + this.state.loggedInUser : 'not logged in';
 
@@ -608,6 +504,13 @@ export default class Editor extends React.Component {
             entryPreviews: this.state.entryPreviews,
             searchClicked: this.state.searchClicked,
             searchClick: this.setWordProcessorFromSearch,
+        };
+
+        const similarityProps = {
+            userid: this.state.userid,
+            clicked: this.state.simClicked,
+            entryPreviews: this.state.entryPreviews,
+            setWordProcessor: this.setWordProcessorFromSearch,
         };
 
         if (!searchProps.searchClicked && this.searchBox.current) {
@@ -643,14 +546,7 @@ export default class Editor extends React.Component {
 
                 { /* SIMILARITY BOX */ }
 
-                <div style={ simResults }>
-                    <div className="scrollBar" style={ styles.boxSimResults }>
-                        { this.similarityEntryListFormat(this.state.entryPreviews) }
-                    </div>
-                    <div style={ styles.simResultsBox }>
-                        { this.formatSimResultsList() }
-                    </div>
-                </div>
+                <Similarities ref={ this.similarities } { ...similarityProps } />
 
                 { /* END SIMILARITY BOX*/ }
 

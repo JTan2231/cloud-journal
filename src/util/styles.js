@@ -1,3 +1,7 @@
+export function addDisplay(style, cond) {
+    return Object.assign({}, style, { display: cond ? '' : 'none' });
+}
+
 export const text = {
     margin: '1em',
     color: 'rgb(191, 187, 187)',
@@ -125,7 +129,6 @@ export const searchResults = {
 export const boxSearch = Object.assign({}, box, {
     margin: '1em',
     transition: '',
-    height: '',
     float: '',
     pointerEvents: '',
     position: 'absolute',
