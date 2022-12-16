@@ -14,14 +14,14 @@ export default class Similarities extends React.Component {
     }
 
     entrySimilarityQuery(entryid) {
-        fetch(config.API_ROOT + 'queries/?user_id=' + this.props.userid + '&qentry_id=' + entryid, {
+        fetch(`${config.API_ROOT}queries/?all=True&user_id=${this.props.userid}&qentry_id=${entryid}`, {
             method: 'GET',      
             headers: { 
                 'Content-Type': 'application/json',
             }
         }).then(res => res.json()).then(res => {
             this.setState({ simResults: res });
-        });                       
+        });
     }
 
     formatSimResultsList() {

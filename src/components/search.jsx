@@ -200,6 +200,7 @@ export default class Search extends React.Component {
             maxWidth: `calc(100% - ${2*this.marginDefault + 2*this.paddingDefault}em`,
             flexBasis: '',
             fontSize: '15px',
+            lineHeight: '1.2em',
         });
 
         const resultsClickDisplayToggleStyle = {
@@ -219,7 +220,6 @@ export default class Search extends React.Component {
 
         const flexWrapperStyle = {
             flexWrap: 'wrap',
-            overflowY: 'scroll',
             display: resultsClickDisplayToggle ? 'none' : 'flex',
         };
 
