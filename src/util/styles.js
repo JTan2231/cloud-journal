@@ -16,11 +16,12 @@ export const borderColor = '1px solid rgba(188, 193, 189, 0.43)';
 export const fontFamily = 'Courier New';
 
 export const position = {
-    zIndex: '1',
+    zIndex: '3',
     position: 'fixed',
     top: '0',
     right: '0',
     margin: '1em',
+    height:'100%',
 };
 
 export const box = {
@@ -31,11 +32,14 @@ export const box = {
 };
 
 export const options = Object.assign({
-    padding: '0.5em 1.5em',
     fontSize: '14px',
     fontFamily: fontFamily,
     textAlign: 'center',
     cursor: 'default',
+    display: 'flex',
+    flexWrap: 'wrap',
+    maxWidth: '30em',
+    justifyContent: 'center',
 }, box);
 
 export const item = {
@@ -111,19 +115,21 @@ export const caret = {
     color: 'grey',
     fontFamily: fontFamily,
     zIndex: 2,
-    margin: '6em 1.8em',
+    margin: '5em 4em',
     userSelect: 'none',
 };
 
+// paddingTop - 2 lines of options - 2.66em of margin - 1em marginTop - 1em marginBottom)
+export const searchBaseMath = '2em - 2em - 2.66em - 1em - 1em';
 export const searchResults = {
-    position: 'absolute',
-    width: '60%',
-    height: '60%',
+    width: '100%',
+    height: `calc(100% - ${searchBaseMath})`,
     zIndex: 3,
     backgroundColor: 'rgb(25, 25, 28)',
     top: 'calc(50vh - 30%)',
-    left: 'calc(50vw - 30%)',
+    left: 'calc(100vw - 45%)',
     borderRadius: '0.5em',
+    marginTop: '2em',
 };
 
 export const boxSearch = Object.assign({}, box, {
@@ -153,7 +159,7 @@ export const resultsBox = Object.assign({}, boxSearch, {
 });
 
 export const boxSimResults = Object.assign({}, boxSearch, {
-    height: 'calc(100% - 2em)',
+    height: `calc(100% - ${searchBaseMath} - 1em - 1em)`,
     width: '25%',
     backgroundColor: 'transparent',
 });
@@ -163,7 +169,7 @@ export const simResultsBox = Object.assign({}, resultsBox, {
     marginTop: '1em',
     left: 'calc(25% + 1em)',
     width: 'calc(75% - 4em)',
-    height: 'calc(100% - 3em)',
+    height: `calc(100% - ${searchBaseMath} - 1em - 2em)`,
     backgroundColor: 'black',
     display: 'flex',
     flexWrap: 'wrap',

@@ -42,16 +42,16 @@ export default class Search extends React.Component {
             padding = this.paddingDefault;
         }
 
+        const size = `calc(100% - ${2*margin + 2*padding}em)`;
         const containerStyle = Object.assign({}, styles.textStyle, {
             borderRadius: '0.5em',
             padding: `${padding}em`,
             margin: `${margin}em`,
-            height: '10em',
-            maxWidth: `calc(25% - ${2*margin + 2*padding}em)`,
-            flexBasis: `calc(25% - ${2*margin + 2*padding}em)`,
+            height: `15em`,
+            maxWidth: size,
+            flexBasis: size,
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            fontSize: '0.8em',
+            fontSize: '1em',
         });
 
         const boldStyle = {
@@ -101,12 +101,10 @@ export default class Search extends React.Component {
             let previews = this.formatEntryList(res);
             
             if (previews.length === 0) {
-                previews = [{
-                    id: 0,
-                    preview: this.searchDefault,
-                }];
+                previews = [this.searchDefault];
             }
 
+            console.log('entryQuery', previews);
             this.setState({ searchResults: previews });
         });
     }
@@ -114,6 +112,8 @@ export default class Search extends React.Component {
     setPreviews() {
         let entries = this.props.entryPreviews;
         entries = this.formatEntryList(entries);
+
+        console.log('setPreviews:', entries);
 
         this.setState({ searchResults: entries });
     }
@@ -185,7 +185,7 @@ export default class Search extends React.Component {
         });
 
         const resultsBoxStyle = Object.assign({}, boxSearchStyle, {
-            height: 'calc(100% - 6em)',
+            height: `calc(100% - ${styles.searchBaseMath} - 3em - 1em - 2em)`,
             width: 'calc(100% - 3em',
             marginTop: '4em',
             backgroundColor: 'black',

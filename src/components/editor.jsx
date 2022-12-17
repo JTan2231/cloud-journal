@@ -56,6 +56,8 @@ export default class Editor extends React.Component {
         this.searchInput = React.createRef();
         this.searchBox = React.createRef();
 
+        this.simBox = React.createRef();
+
         this.arenaChannelInput = React.createRef();
         this.importStatus = React.createRef();
     }
@@ -106,6 +108,7 @@ export default class Editor extends React.Component {
 
     userLogout() {
         this.clearInputs();
+        this.clearImportChannelFields();
         this.wordProcessor.current.clear();
         this.setState({
             loggedInUser: '',
@@ -113,6 +116,7 @@ export default class Editor extends React.Component {
             loginError: false,
             searchClicked: false,
             simClicked: false,
+            channelClicked: false,
             simResults: [],
             searchResults: [],
             lastSaved: 'unsaved',
@@ -312,6 +316,17 @@ export default class Editor extends React.Component {
         };
     }
 
+    toggleSimState() {
+        if (this.state.simClicked) {
+            this.simBox.current.reset();
+        }
+
+        return {
+            simClicked: !this.state.simClicked,
+            simResults: this.state.simClicked ? [] : this.state.simResults
+        };
+    }
+
     searchButtonClick() {
         let newState = this.toggleSearchState();
         if (this.state.simClicked) {
@@ -322,14 +337,11 @@ export default class Editor extends React.Component {
             this.searchBox.current.setPreviews();
         }
 
-        this.setState(newState);
-    }
+        if (this.state.channelClicked) {
+            newState.channelClicked = false;
+        }
 
-    toggleSimState() {
-        return {
-            simClicked: !this.state.simClicked,
-            simResults: this.state.simClicked ? [] : this.state.simResults
-        };
+        this.setState(newState);
     }
 
     simButtonClick() {
@@ -404,6 +416,10 @@ export default class Editor extends React.Component {
 
         if (this.state.exportClicked) {
             newState.exportClicked = false;
+        }
+
+        if (this.state.searchClicked) {
+            newState = Object.assign(this.toggleSearchState(), newState);
         }
 
         this.setState(newState);
@@ -505,13 +521,15 @@ export default class Editor extends React.Component {
  
         const loginGroupStyle = {
             margin: '1em auto',
+            marginRight: '-1em',
             position: 'absolute',
+            right: '0',
             zIndex: this.state.loginClicked ? 100 : -100,
         };
 
-        const newUserGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.newUserClicked ? 100 : -100 });
-        const channelGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.channelClicked ? 100 : -100 });
-        const exportGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.exportClicked ? 100 : -100 });
+        const newUserGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.newUserClicked ? 100 : -100, right: '', });
+        const channelGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.channelClicked ? 100 : -100, right: '', });
+        const exportGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.exportClicked ? 100 : -100, right: '', });
 
         const importStatusStyle = Object.assign({}, styles.textStyle, {
             color: this.state.importStatus === 'success' ? 'green' : 'red',
@@ -519,19 +537,6 @@ export default class Editor extends React.Component {
 
         return (
             <div>
-
-                { /* SEARCH BOX */ }
-
-                <Search ref={ this.searchBox } { ...searchProps } />
-
-                { /* END SEARCH BOX */ }
-
-                { /* SIMILARITY BOX */ }
-
-                <Similarities ref={ this.similarities } { ...similarityProps } />
-
-                { /* END SIMILARITY BOX*/ }
-
                 { /* HEADER */ }
 
                 <TypingText text={ typingTextValue } red={ this.state.userid === -1 } compareAll={ true } style={ styles.typingText } />
@@ -540,14 +545,14 @@ export default class Editor extends React.Component {
 
                 { /* END HEADER */ }
 
-                <WordProcessor ref={ this.wordProcessor }/>
+                <div style={{ display: 'flex' }}>
+                    <WordProcessor ref={ this.wordProcessor }/>
 
-                { /* TODO: Please God make this a separate component */ }
-                { /* NAVIGATION BOX */ }
+                    { /* TODO: Please God make this a separate component */ }
+                    { /* NAVIGATION BOX */ }
 
-                <div style={ styles.position }>
-                    <div style={ styles.options }>
-                        <div>
+                    <div style={ styles.position }>
+                        <div style={ styles.options }>
                             <span class="menuItem" style={ newUserStyle } onClick={ this.newUserClick.bind(this) }>new user</span>
                             <span class="menuItem" style={ styles.item } onClick={ this.loginButtonClick.bind(this) }>
                                 { this.state.loggedInUser.length > 0 ? 'logout' : 'login' }
@@ -556,77 +561,79 @@ export default class Editor extends React.Component {
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.searchButtonClick.bind(this) }>search</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.simButtonClick.bind(this) }>similarities</span>
-                        </div>
-                        <div style={{ marginTop: this.state.userid === -1 ? '' : '0.5em' }}>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.importChannelClick.bind(this) }>import</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.exportButtonClick.bind(this) }>export</span>
                         </div>
-                    </div>
 
-                    { /* TODO: Make these into components */ }
-                    { /* LOGIN FIELDS */ }
+                        { /* TODO: Make these into components */ }
+                        { /* LOGIN FIELDS */ }
 
-                    <div style={ loginGroupStyle }>
-                        <div tabIndex="-1" style={ loginInputBox }>
-                            <input type="text" ref={ this.usernameInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="username" style={ loginInput } />
-                        </div>
-                        <div tabIndex="-1" style={ loginInputBox }>
-                            <input type="text" ref={ this.passwordInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="password" style={ loginInput } />
-                        </div>
-                        <div style={ loginButton } onClick={ this.userLoginAttempt.bind(this) }>
-                            <div style={{ padding: '0.25em 0.5em' }}>></div>
-                        </div>
-                    </div>
-
-                    { /* END LOGIN FIELDS */ }
-
-                    { /* NEW USER FIELDS */ }
-
-                    <div style={ newUserGroupStyle }>
-                        <div tabIndex="-1" style={ newUserInputBox }>
-                            <input type="text" ref={ this.newUsernameInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new username" style={ newUserInput } />
-                        </div>
-                        <div tabIndex="-1" style={ newUserInputBox }>
-                            <input type="text" ref={ this.newPasswordInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new password" style={ newUserInput } />
-                        </div>
-                        <div style={ newUserButton } onClick={ this.createUserAttempt.bind(this) }>
-                            <div style={{ padding: '0.25em 0.5em' }}>></div>
-                        </div>
-                    </div>
-
-                    { /* END NEW USER FIELDS */ }
-
-                    { /* IMPORT FIELDS */ }
-
-                    <div style={ channelGroupStyle }>
-                        <span><div tabIndex="-1" style={ channelInputBox }>
-                            <input type="text" ref={ this.arenaChannelInput } onKeyPress={ this.arenaChannelKeyPress.bind(this) } placeholder="are.na channel url" style={ channelInput } />
-                        </div></span>
-                        <span ref={ this.importStatus } style={ importStatusStyle } />
-                    </div>
-
-                    { /* END IMPORT FIELDS */ }
-
-                    { /* EXPORT FIELDS */ }
-
-                    <div style={ exportGroupStyle }>
-                        <span>
-                            <div style={ Object.assign({}, exportButton, { height: '', padding: '0.5em' }) }
-                                 onClick={ (this.exportEntriesTypeWrapper('raw')).bind(this) }>
-                                raw
+                        <div style={ loginGroupStyle }>
+                            <div tabIndex="-1" style={ loginInputBox }>
+                                <input type="text" ref={ this.usernameInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="username" style={ loginInput } />
                             </div>
-                            <div style={ Object.assign({}, exportButton, { height: '', padding: '0.5em' }) }
-                                 onClick={ (this.exportEntriesTypeWrapper('text')).bind(this) }>
-                                text
+                            <div tabIndex="-1" style={ loginInputBox }>
+                                <input type="text" ref={ this.passwordInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="password" style={ loginInput } />
                             </div>
-                        </span>
+                            <div style={ loginButton } onClick={ this.userLoginAttempt.bind(this) }>
+                                <div style={{ padding: '0.25em 0.5em' }}>></div>
+                            </div>
+                        </div>
+
+                        { /* END LOGIN FIELDS */ }
+
+                        { /* NEW USER FIELDS */ }
+
+                        <div style={ newUserGroupStyle }>
+                            <div tabIndex="-1" style={ newUserInputBox }>
+                                <input type="text" ref={ this.newUsernameInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new username" style={ newUserInput } />
+                            </div>
+                            <div tabIndex="-1" style={ newUserInputBox }>
+                                <input type="text" ref={ this.newPasswordInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new password" style={ newUserInput } />
+                            </div>
+                            <div style={ newUserButton } onClick={ this.createUserAttempt.bind(this) }>
+                                <div style={{ padding: '0.25em 0.5em' }}>></div>
+                            </div>
+                        </div>
+
+                        { /* END NEW USER FIELDS */ }
+
+                        { /* IMPORT FIELDS */ }
+
+                        <div style={ channelGroupStyle }>
+                            <span><div tabIndex="-1" style={ channelInputBox }>
+                                <input type="text" ref={ this.arenaChannelInput } onKeyPress={ this.arenaChannelKeyPress.bind(this) } placeholder="are.na channel url" style={ channelInput } />
+                            </div></span>
+                            <span ref={ this.importStatus } style={ importStatusStyle } />
+                        </div>
+
+                        { /* END IMPORT FIELDS */ }
+
+                        { /* EXPORT FIELDS */ }
+
+                        <div style={ exportGroupStyle }>
+                            <span>
+                                <div style={ Object.assign({}, exportButton, { height: '', padding: '0.5em' }) }
+                                     onClick={ (this.exportEntriesTypeWrapper('raw')).bind(this) }>
+                                    raw
+                                </div>
+                                <div style={ Object.assign({}, exportButton, { height: '', padding: '0.5em' }) }
+                                     onClick={ (this.exportEntriesTypeWrapper('text')).bind(this) }>
+                                    text
+                                </div>
+                            </span>
+                        </div>
+
+                        { /* END EXPORT FIELDS */ }
+
+
+                        <Search ref={ this.searchBox } { ...searchProps } />
+                        <Similarities ref={ this.simBox } { ...similarityProps } />
+
                     </div>
 
-                    { /* END EXPORT FIELDS */ }
-
+                    { /* END NAVIGATION BOX */ }
                 </div>
-
-                { /* END NAVIGATION BOX */ }
 
             </div>
         );

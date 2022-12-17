@@ -118,23 +118,33 @@ export default class WordProcessor extends React.Component {
 
         const innerStyle = {
             outline: 'none',
-            margin: '6em 3em',
             color: 'white',
             fontSize: '16px',
             fontFamily: 'Courier New',
             minWidth: '2px',
+            overflowWrap: 'break-word',
+        };
+
+        const backgroundStyle = {
+            backgroundColor: 'black',
+            borderRadius: '1em',
+            margin: '4em 3em 0 3em',
+            height: 'calc(100vh - 6em - 1em)',
+            width: 'calc(100% - 30em - 1.5em - 2em)',
+            padding: '1em',
         };
 
         document.body.style.margin = "0";
 
         return (
             <div style={ outerStyle } onClick={ this.focusTextbox.bind(this) }>
-                <div style={ styles.caret }>
-                    <span>> </span>
-                    <span>{ this.state.prompt }</span>
-                </div>
-                <div id="textbox" tabIndex="0" ref={ this.textbox } style={ innerStyle } 
-                     contentEditable="true" onKeyUp={ this.editorKeyPress.bind(this) }>
+                <div style={ backgroundStyle }>
+                    <div style={ styles.caret }>
+                        <span>{ this.state.prompt }</span>
+                    </div>
+                    <div id="textbox" tabIndex="0" ref={ this.textbox } style={ innerStyle } 
+                         contentEditable="true" onKeyUp={ this.editorKeyPress.bind(this) }>
+                    </div>
                 </div>
             </div>
         );

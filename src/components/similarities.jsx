@@ -11,6 +11,14 @@ export default class Similarities extends React.Component {
             entryPreviews: [],
             simResults: [],
         };
+
+        this.boldStyle = {
+            fontSize: '1.1em',
+            fontWeight: '',
+            color: 'white'
+        };
+
+        this.fontSize = '0.8em';
     }
 
     entrySimilarityQuery(entryid) {
@@ -25,22 +33,18 @@ export default class Similarities extends React.Component {
     }
 
     formatSimResultsList() {
-        const boldStyle = {
-            fontSize: '1.25em',
-            fontWeight: '',
-            color: 'white'
-        };
-
         const margin = 0.5;
         const padding = 0.5;
+        const size = `calc(100% - ${2*margin + 2*padding}em)`;
         const entryStyle = Object.assign({}, styles.textStyle, {
             borderRadius: '0.5em',
             padding: `${padding}em`,
             margin: `${margin}em`,
-            maxWidth: `calc(33% - ${2*margin + 2*padding}em)`,
-            flexBasis: `calc(33% - ${2*margin + 2*padding}em)`,
+            maxWidth: size,
+            flexBasis: size,
             height: '10em',
             overflow: 'hidden',
+            fontSize: this.fontSize,
         });
 
         let processed = [];
@@ -54,29 +58,26 @@ export default class Similarities extends React.Component {
             const id = res.entryid;
             processed.push(
                 <div class="searchItem" style={ entryStyle } onClick={ () => this.props.setWordProcessor(id) }>
-                    <span style={ boldStyle }>{ boldWords }</span> { words }
+                    <span style={ this.boldStyle }>{ boldWords }</span> { words }
                 </div>
             );
         }
 
         if (processed.length === 0) {
-            processed = (<div style={ styles.textStyle }>{ `Click an entry on the left to see the rest of your entries ranked in order of relevance.` }</div>);
+            processed = (<div style={ styles.textStyle }>{ `Click one of your entries on the left to see the most relevant of others' recent entries.` }</div>);
         }
 
         return processed;
     }
 
     similarityEntryListFormat(entries) {
-        const boldStyle = {  
-            fontSize: '1.25em',
-            fontWeight: '',
-            color: 'white'
-        };                      
-
         const entryStyle = Object.assign({}, styles.textStyle, {
             borderRadius: '0.5em',
             padding: '0.5em',    
-            margin: '0 0 1em 0',    
+            margin: '0 0 1em 0',
+            fontSize: this.fontSize,
+            maxHeight: '15em',
+            overflow: 'hidden',
         });
 
         let processed = [];
@@ -89,7 +90,7 @@ export default class Similarities extends React.Component {
 
             processed.push(
                 <div class="searchItem" style={ entryStyle } onClick={ () => this.entrySimilarityQuery(kp.entryid) }>
-                    <span style={ boldStyle }>{ boldWords }</span> { words }
+                    <span style={ this.boldStyle }>{ boldWords }</span> { words }
                 </div>
             );
         }
@@ -99,6 +100,10 @@ export default class Similarities extends React.Component {
         }
 
         return processed;
+    }
+
+    reset() {
+        this.setState({ simResults: [] });
     }
 
     render() {
