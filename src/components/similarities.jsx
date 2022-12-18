@@ -57,7 +57,7 @@ export default class Similarities extends React.Component {
 
             const id = res.entryid;
             processed.push(
-                <div class="searchItem" style={ entryStyle } onClick={ () => this.props.setWordProcessor(id) }>
+                <div class="libraryItem" style={ entryStyle } onClick={ () => this.props.setWordProcessor(id) }>
                     <span style={ this.boldStyle }>{ boldWords }</span> { words }
                 </div>
             );
@@ -89,7 +89,7 @@ export default class Similarities extends React.Component {
             words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
 
             processed.push(
-                <div class="searchItem" style={ entryStyle } onClick={ () => this.entrySimilarityQuery(kp.entryid) }>
+                <div class="libraryItem" style={ entryStyle } onClick={ () => this.entrySimilarityQuery(kp.entryid) }>
                     <span style={ this.boldStyle }>{ boldWords }</span> { words }
                 </div>
             );
@@ -107,7 +107,7 @@ export default class Similarities extends React.Component {
     }
 
     render() {
-        const simResults = styles.addDisplay(styles.searchResults, this.props.clicked);
+        const simResults = styles.addDisplay(styles.libraryResults, this.props.clicked);
 
         return (
             <div style={ simResults }>

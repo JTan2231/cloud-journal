@@ -132,7 +132,7 @@ export default class WordProcessor extends React.Component {
             height: 'calc(100vh - 6em - 1em)',
             width: 'calc(100% - 30em - 1.5em - 2em)',
             padding: '1em',
-            overflow: 'scroll',
+            overflowY: 'auto',
         };
 
         document.body.style.margin = "0";

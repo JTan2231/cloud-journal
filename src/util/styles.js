@@ -2,18 +2,19 @@ export function addDisplay(style, cond) {
     return Object.assign({}, style, { display: cond ? '' : 'none' });
 }
 
-export const text = {
-    margin: '1em',
-    color: 'rgb(191, 187, 187)',
-    fontFamily: 'Courier New',
-    fontSize: '14px',
-};
-
 export const backgroundColor = 'rgba(136, 136, 136, 0.1)';
 export const menuTextColor = 'rgb(191, 187, 187)';
 export const borderColor = '1px solid rgba(188, 193, 189, 0.43)';
 
 export const fontFamily = 'Courier New';
+export const fontSize = '14px';
+
+export const text = {
+    margin: '1em',
+    color: 'rgb(191, 187, 187)',
+    fontFamily: fontFamily,
+    fontSize: fontSize,
+};
 
 export const position = {
     zIndex: '3',
@@ -32,7 +33,7 @@ export const box = {
 };
 
 export const options = Object.assign({
-    fontSize: '14px',
+    fontSize: fontSize,
     fontFamily: fontFamily,
     textAlign: 'center',
     cursor: 'default',
@@ -86,6 +87,7 @@ export const typingText = {
     left: '0',
     margin: '1em 0 0 2.8em',
     fontFamily: fontFamily,
+    fontSize: fontSize,
     zIndex: 2,
 };
 
@@ -95,6 +97,7 @@ export const lastSaved = {
     left: 'calc(50% - 10em)',
     margin: '1em',
     fontFamily: fontFamily,
+    fontSize: fontSize,
     zIndex: 2,
     color: 'grey',
 };
@@ -105,6 +108,7 @@ export const time = {
     left: 'calc(50% - 3em)',
     margin: '1em',
     fontFamily: fontFamily,
+    fontSize: fontSize,
     zIndex: 2,
 };
 
@@ -120,10 +124,10 @@ export const caret = {
 };
 
 // paddingTop - 2 lines of options - 2.66em of margin - 1em marginTop - 1em marginBottom)
-export const searchBaseMath = '2em - 2em - 2.66em - 1em - 1em';
-export const searchResults = {
+export const libraryBaseMath = '2em - 2em - 2.66em - 1em - 1em';
+export const libraryResults = {
     width: '100%',
-    height: `calc(100% - ${searchBaseMath})`,
+    height: `calc(100% - ${libraryBaseMath})`,
     zIndex: 3,
     backgroundColor: 'rgb(25, 25, 28)',
     top: 'calc(50vh - 30%)',
@@ -155,11 +159,11 @@ export const boxInput = Object.assign({}, loginInput, {
 export const resultsBox = Object.assign({}, boxSearch, {
     height: 'calc(100% - 5em)',
     marginTop: '4em',
-    overflow: 'scroll',
+    overflowY: 'auto',
 });
 
 export const boxSimResults = Object.assign({}, boxSearch, {
-    height: `calc(100% - ${searchBaseMath} - 1em - 1em)`,
+    height: `calc(100% - ${libraryBaseMath} - 1em - 1em)`,
     width: '25%',
     backgroundColor: 'transparent',
 });
@@ -169,7 +173,7 @@ export const simResultsBox = Object.assign({}, resultsBox, {
     marginTop: '1em',
     left: 'calc(25% + 1em)',
     width: 'calc(75% - 4em)',
-    height: `calc(100% - ${searchBaseMath} - 1em - 2em)`,
+    height: `calc(100% - ${libraryBaseMath} - 1em - 2em)`,
     backgroundColor: 'black',
     display: 'flex',
     flexWrap: 'wrap',
@@ -179,6 +183,6 @@ export const simResultsBox = Object.assign({}, resultsBox, {
 export const textStyle = {
     margin: '1em',
     color: 'rgb(191, 187, 187)',
-    fontFamily: 'Courier New',
-    fontSize: '14px',
+    fontFamily: fontFamily,
+    fontSize: fontSize,
 };

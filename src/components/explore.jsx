@@ -2,9 +2,9 @@ import * as config from '../util/config.js';
 import * as styles from '../util/styles.js';
 import React from 'react';
 
-import '../styles/search_item.css';
+import '../styles/library_item.css';
 
-export default class Search extends React.Component {
+export default class Explore extends React.Component {
     constructor(props) {
         super(props);
 
@@ -13,13 +13,13 @@ export default class Search extends React.Component {
         this.marginDefault = 0.5;
         this.paddingDefault = 0.5;
 
-        this.searchDefault = (<div style={ styles.textStyle }>{ `Search through your saved entries.` }</div>);
+        this.header = (<div style={{ fontSize: '14px', }}>{ `Read others' most recently saved entries.` }</div>);
 
-        this.searchInput = React.createRef();
+        this.libraryInput = React.createRef();
         this.resultsClickDisplay = React.createRef();
     }
 
-    searchResultsClick(id) {
+    libraryResultsClick(id) {
         fetch(`${config.API_ROOT}entries/?user_id=${this.props.userid}&id=${id}`, {
             method: 'GET',
             headers: {
@@ -75,7 +75,7 @@ export default class Search extends React.Component {
 
             const id = entries[i].entryid;
             processed.push(
-                <div class="searchItem" style={ entryStyle } onClick={ () => this.searchResultsClick(id) }>
+                <div class="libraryItem" style={ entryStyle } onClick={ () => this.libraryResultsClick(id) }>
                     <span>
                         <span style={ boldStyle }>{ boldWords }</span> { words }
                     </span>
@@ -88,7 +88,7 @@ export default class Search extends React.Component {
 
     entryQuery() {
         const userid = this.props.userid;
-        const query = this.searchInput.current.value;
+        const query = this.libraryInput.current.value;
         fetch(`${config.API_ROOT}queries/?user_id=${userid}&query=${encodeURI(query)}&return=True`, {
             method: 'GET',
             headers: {
@@ -101,11 +101,10 @@ export default class Search extends React.Component {
             let previews = this.formatEntryList(res);
             
             if (previews.length === 0) {
-                previews = [this.searchDefault];
+                previews = [this.libraryDefault];
             }
 
-            console.log('entryQuery', previews);
-            this.setState({ searchResults: previews });
+            this.setState({ libraryResults: previews });
         });
     }
 
@@ -113,19 +112,17 @@ export default class Search extends React.Component {
         let entries = this.props.entryPreviews;
         entries = this.formatEntryList(entries);
 
-        console.log('setPreviews:', entries);
-
-        this.setState({ searchResults: entries });
+        this.setState({ exploreResults: entries });
     }
 
-    searchKeyPress(e) {
+    libraryKeyPress(e) {
         if (e.key === 'Enter') {
             this.entryQuery();
         }
     }
 
     clearResults() {
-        this.setState({ searchResults: this.searchDefault });
+        this.setState({ libraryResults: this.libraryDefault });
     }
 
     returnToResults() {
@@ -154,8 +151,8 @@ export default class Search extends React.Component {
             borderRadius: '0.5em',
         };
 
-        const searchResults = Object.assign({}, styles.searchResults, {
-            display: this.props.searchClicked ? '' : 'none',
+        const libraryResults = Object.assign({}, styles.libraryResults, {
+            display: this.props.exploreClicked ? '' : 'none',
         });
 
         const boxSearchStyle = Object.assign({}, boxStyle, {
@@ -165,10 +162,11 @@ export default class Search extends React.Component {
             pointerEvents: '',
             position: 'absolute',
             zIndex: 4,
-            overflowX: 'hidden',
+            overflow: 'hidden',
             width: 'calc(100% - 2em)',
             height: '2em',
             border: 'none',
+            backgroundColor: 'transparent',
         });
 
         const boxInputStyle = Object.assign({}, {
@@ -185,11 +183,12 @@ export default class Search extends React.Component {
         });
 
         const resultsBoxStyle = Object.assign({}, boxSearchStyle, {
-            height: `calc(100% - ${styles.searchBaseMath} - 3em - 1em - 2em)`,
+            height: `calc(100% - ${styles.libraryBaseMath} - 3em - 1em - 2em)`,
             width: 'calc(100% - 3em',
             marginTop: '4em',
             backgroundColor: 'black',
             padding: '0.5em',
+            overflowY: 'auto',
         });
 
         const resultsClickDisplayToggle = this.state.resultsClickDisplay != null;
@@ -224,19 +223,21 @@ export default class Search extends React.Component {
         };
 
         return (
-            <div style={ searchResults }>
+            <div style={ libraryResults }>
                 <div style={ boxSearchStyle }>
-                    <input type="text" ref={ this.searchInput } onKeyPress={ this.searchKeyPress.bind(this) } placeholder="search" style={ boxInputStyle } />
+                    <div style={ boxInputStyle }>
+                        { this.header }
+                    </div>
                 </div>
                 <div style={ resultsBoxStyle }>
                     <div style={ flexWrapperStyle }>
-                        { this.state.searchResults }
+                        { this.state.exploreResults }
                     </div>
 
                     <div style={ resultsClickDisplayToggleStyle }>
                         <div style={ buttonWrapperStyle }>
-                            <span className="searchItem" style={ goBackButton } onClick={ this.returnToResults.bind(this) }>go back</span>
-                            <span className="searchItem" style={ goBackButton } onClick={ () => this.props.searchClick(this.state.currentEntryId) }>load</span>
+                            <span className="libraryItem" style={ goBackButton } onClick={ this.returnToResults.bind(this) }>go back</span>
+                            { /* <span className="libraryItem" style={ goBackButton } onClick={ () => this.props.libraryClick(this.state.currentEntryId) }>load</span> */ }
                         </div>
                         <div ref={ this.resultsClickDisplay } style={ resultsClickDisplayStyle } dangerouslySetInnerHTML={{ __html: this.state.resultsClickDisplay }}>
                         </div>

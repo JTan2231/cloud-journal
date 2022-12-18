@@ -1,9 +1,9 @@
-.searchItem {
+.libraryItem {
     transition: background-color 0.25s ease-out;
     background-color: rgba(136, 136, 136, 0.27);
 }
 
-.searchItem:hover {
+.libraryItem:hover {
     background-color: rgba(136, 136, 136, 0.5);
     cursor: pointer;
 }

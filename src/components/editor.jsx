@@ -4,11 +4,12 @@ import React from 'react';
 import WordProcessor from './word_processor.jsx';
 import TypingText from './typing_text.jsx';
 
-import Search from './search.jsx';
+import Library from './library.jsx';
 import Similarities from './similarities.jsx';
+import Explore from './explore.jsx';
 
 import '../styles/menu_item.css';
-import '../styles/search_item.css';
+import '../styles/library_item.css';
 
 export default class Editor extends React.Component {
     constructor(props) {
@@ -21,6 +22,7 @@ export default class Editor extends React.Component {
             loginClicked: false,
             newUserClicked: false,
             simClicked: false,
+            exploreClicked: false,
             channelClicked: false,
             exportClicked: false,
             importStatus: '',
@@ -31,15 +33,16 @@ export default class Editor extends React.Component {
             newUserError: false,
             channelError: false,
             lastSaved: 'unsaved',
-            searchClicked: false,
-            searchResults: [],
+            libraryClicked: false,
+            libraryResults: [],
             entryPreviews: [],
+            latestEntryPreviews: [],
             simResults: [],
             entryIdMap: new Map(),
             mounted: false,
         };
 
-        this.setWordProcessorFromSearch = (entryid) => {
+        this.setWordProcessorFromLibrary = (entryid) => {
             this.getEntryItemClick(this.state.userid, entryid);
         };
 
@@ -53,10 +56,12 @@ export default class Editor extends React.Component {
         this.newUsernameInput = React.createRef();
         this.newPasswordInput = React.createRef();
 
-        this.searchInput = React.createRef();
-        this.searchBox = React.createRef();
+        this.libraryInput = React.createRef();
+        this.libraryBox = React.createRef();
 
         this.simBox = React.createRef();
+
+        this.explore = React.createRef();
 
         this.arenaChannelInput = React.createRef();
         this.importStatus = React.createRef();
@@ -72,8 +77,8 @@ export default class Editor extends React.Component {
         this.newUsernameInput.current.value = '';
         this.newPasswordInput.current.value = '';
 
-        if (this.searchInput.current) {
-            this.searchInput.current.value = '';
+        if (this.libraryInput.current) {
+            this.libraryInput.current.value = '';
         }
     }
 
@@ -97,7 +102,8 @@ export default class Editor extends React.Component {
                     loginClicked: false,
                 });
 
-                this.getEntries(res.user_id);
+                this.getUserEntries(res.user_id);
+                this.getLatestEntries(res.user_id);
                 this.clearInputs();
             }
             else if (res.errors) {
@@ -114,11 +120,11 @@ export default class Editor extends React.Component {
             loggedInUser: '',
             userid: -1,
             loginError: false,
-            searchClicked: false,
+            libraryClicked: false,
             simClicked: false,
             channelClicked: false,
             simResults: [],
-            searchResults: [],
+            libraryResults: [],
             lastSaved: 'unsaved',
         });
     }
@@ -138,7 +144,7 @@ export default class Editor extends React.Component {
         });
     }
 
-    getEntries(userid) {
+    getUserEntries(userid) {
         fetch(config.API_ROOT + 'entries/?user_id=' + userid, {
             method: 'GET',
             headers: {
@@ -147,13 +153,20 @@ export default class Editor extends React.Component {
         }).then(res => res.json()).then(res => {
             let entries = res.map(kp => ({ entryid: kp.id, preview: kp.text_preview }));
 
-            let newIdMap = new Map();
-            for (let i = 0; i < entries.length; i++) {
-                const e = entries[i];
-                newIdMap.set(e.entryid, i+1);
-            }
+            this.setState({ entryPreviews: entries });
+        });
+    }
 
-            this.setState({ entryPreviews: entries, entryIdMap: newIdMap });
+    getLatestEntries(userid) {
+        fetch(`${config.API_ROOT}explore/?user_id=${userid}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }).then(res => res.json()).then(res => {
+            let entries = res.map(kp => ({ entryid: kp.id, preview: kp.text_preview }));
+
+            this.setState({ latestEntryPreviews: entries });
         });
     }
 
@@ -273,7 +286,7 @@ export default class Editor extends React.Component {
                     }
                 }).then(res => res.json()).then(res => {
                     // TODO: Make this happen with the initial request
-                    this.getEntries(this.state.userid);
+                    this.getUserEntries(this.state.userid);
                     this.setState({
                         entryid: res.entry_id,
                         lastSaved: new Date().toLocaleString(),
@@ -292,7 +305,7 @@ export default class Editor extends React.Component {
                     }
                 }).then(res => {
                     // TODO: Make this happen with the initial request
-                    this.getEntries(this.state.userid);
+                    this.getUserEntries(this.state.userid);
                     this.setState({ lastSaved: new Date().toLocaleString() });
                 });
             }
@@ -305,15 +318,23 @@ export default class Editor extends React.Component {
         }
     }
 
-    toggleSearchState() {
-        if (this.state.searchClicked) {
-            this.searchBox.current.reset();
+    toggleLibraryState() {
+        if (this.state.libraryClicked) {
+            this.libraryBox.current.reset();
         }
 
         return {
-            searchClicked: !this.state.searchClicked,
-            searchResults: this.state.searchClicked ? [] : this.state.searchResults,
+            libraryClicked: !this.state.libraryClicked,
+            libraryResults: this.state.libraryClicked ? [] : this.state.libraryResults,
         };
+    }
+
+    toggleExploreState() {
+        if (this.state.exploreClicked) {
+            this.explore.current.reset();
+        }
+
+        return { exploreClicked: !this.state.exploreClicked, };
     }
 
     toggleSimState() {
@@ -327,14 +348,43 @@ export default class Editor extends React.Component {
         };
     }
 
-    searchButtonClick() {
-        let newState = this.toggleSearchState();
-        if (this.state.simClicked) {
+    closeOtherWindows(newState, currentWindow) {
+        if (currentWindow !== 'similarities' && this.state.simClicked) {
             newState = Object.assign(newState, this.toggleSimState());
         }
 
-        if (!this.state.searchClicked) {
-            this.searchBox.current.setPreviews();
+        if (currentWindow !== 'library' && this.state.libraryClicked) {
+            newState = Object.assign(newState, this.toggleLibraryState());
+        }
+
+        if (currentWindow !== 'explore' && this.state.exploreClicked) {
+            newState = Object.assign(newState, this.toggleExploreState());
+        }
+
+        return newState;
+    }
+
+    libraryButtonClick() {
+        let newState = this.toggleLibraryState();
+        newState = this.closeOtherWindows(newState, 'library');
+
+        if (!this.state.libraryClicked) {
+            this.libraryBox.current.setPreviews();
+        }
+
+        if (this.state.channelClicked) {
+            newState.channelClicked = false;
+        }
+
+        this.setState(newState);
+    }
+
+    exploreButtonClick() {
+        let newState = this.toggleExploreState();
+        newState = this.closeOtherWindows(newState, 'explore');
+
+        if (!this.state.exploreClicked) {
+            this.explore.current.setPreviews();
         }
 
         if (this.state.channelClicked) {
@@ -346,12 +396,10 @@ export default class Editor extends React.Component {
 
     simButtonClick() {
         let newState = this.toggleSimState();
-        if (!this.state.simClicked) {
-            this.getEntries(this.state.userid)
-        }
+        newState = this.closeOtherWindows(newState, 'similarities');
 
-        if (this.state.searchClicked) {
-            newState = Object.assign(newState, this.toggleSearchState());
+        if (!this.state.simClicked) {
+            this.getUserEntries(this.state.userid)
         }
 
         this.setState(newState);
@@ -418,8 +466,8 @@ export default class Editor extends React.Component {
             newState.exportClicked = false;
         }
 
-        if (this.state.searchClicked) {
-            newState = Object.assign(this.toggleSearchState(), newState);
+        if (this.state.libraryClicked) {
+            newState = Object.assign(this.toggleLibraryState(), newState);
         }
 
         this.setState(newState);
@@ -497,22 +545,27 @@ export default class Editor extends React.Component {
 
         const typingTextValue = this.state.loggedInUser.length > 0 ? 'logged in as ' + this.state.loggedInUser : 'not logged in';
 
-        const searchProps = {
+        const libraryProps = {
             userid: this.state.userid,
             entryPreviews: this.state.entryPreviews,
-            searchClicked: this.state.searchClicked,
-            searchClick: this.setWordProcessorFromSearch,
+            libraryClicked: this.state.libraryClicked,
+            libraryClick: this.setWordProcessorFromLibrary,
         };
 
         const similarityProps = {
             userid: this.state.userid,
             clicked: this.state.simClicked,
             entryPreviews: this.state.entryPreviews,
-            setWordProcessor: this.setWordProcessorFromSearch,
+            setWordProcessor: this.setWordProcessorFromLibrary,
         };
 
-        if (!searchProps.searchClicked && this.searchBox.current) {
-            this.searchBox.current.clearResults();
+        const exploreProps = {
+            exploreClicked: this.state.exploreClicked,
+            entryPreviews: this.state.latestEntryPreviews,
+        };
+
+        if (!libraryProps.libraryClicked && this.libraryBox.current) {
+            this.libraryBox.current.clearResults();
         }
 
         const newUserStyle = Object.assign({}, styles.item, { display: this.state.loggedInUser.length > 0 ? 'none' : '' });
@@ -559,7 +612,8 @@ export default class Editor extends React.Component {
                             </span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.newEntryClick.bind(this) }>new entry</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
-                            <span class="menuItem" style={ loggedInStyles } onClick={ this.searchButtonClick.bind(this) }>search</span>
+                            <span class="menuItem" style={ loggedInStyles } onClick={ this.libraryButtonClick.bind(this) }>library</span>
+                            <span class="menuItem" style={ loggedInStyles } onClick={ this.exploreButtonClick.bind(this) }>explore</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.simButtonClick.bind(this) }>similarities</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.importChannelClick.bind(this) }>import</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.exportButtonClick.bind(this) }>export</span>
@@ -627,8 +681,9 @@ export default class Editor extends React.Component {
                         { /* END EXPORT FIELDS */ }
 
 
-                        <Search ref={ this.searchBox } { ...searchProps } />
+                        <Library ref={ this.libraryBox } { ...libraryProps } />
                         <Similarities ref={ this.simBox } { ...similarityProps } />
+                        <Explore ref={ this.explore } { ...exploreProps } />
 
                     </div>
 
