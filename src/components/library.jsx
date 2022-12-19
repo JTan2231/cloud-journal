@@ -60,12 +60,22 @@ export default class Library extends React.Component {
             color: 'white'
         };
 
-        return [ containerStyle, boldStyle ];
+        const headerStyle = {
+            marginBottom: '0.5em',
+        };
+
+        const timestampStyle = Object.assign({}, styles.textStyle, {
+            fontSize: '0.8em',
+        });
+
+        return [ containerStyle, boldStyle, headerStyle, timestampStyle ];
     }
 
     formatEntryList(entries) {
         const [ entryStyle,
-                boldStyle ] = this.getResultsStyles(null, null);
+                boldStyle,
+                headerStyle,
+                timestampStyle ] = this.getResultsStyles(null, null);
 
         let processed = [];
         for (var i = 0; i < entries.length; i++) {
@@ -73,11 +83,21 @@ export default class Library extends React.Component {
             let boldWords = words.slice(0, config.BOLD_LENGTH).join(' ');
             words = words.slice(config.BOLD_LENGTH, words.length).join(' ');
 
+            const timestamp = entries[i].timestamp;
             const id = entries[i].entryid;
+            const title = entries[i].title === 'untitled' ? timestamp.split('T')[1].split('.')[0] : entries[i].title;
             processed.push(
                 <div class="libraryItem" style={ entryStyle } onClick={ () => this.libraryResultsClick(id) }>
+                    <div style={ headerStyle }>
+                        <span style={ boldStyle }>
+                            { title }
+                        </span>
+                        <span style={ timestampStyle }>
+                            { timestamp.substr(0, 10) }
+                        </span>
+                    </div>
                     <span>
-                        <span style={ boldStyle }>{ boldWords }</span> { words }
+                        <span>{ boldWords }</span> { words }
                     </span>
                 </div>
             );

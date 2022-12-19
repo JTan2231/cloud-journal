@@ -25,6 +25,7 @@ export default class Editor extends React.Component {
             exploreClicked: false,
             channelClicked: false,
             exportClicked: false,
+            saveClicked: false,
             importStatus: '',
             loggedInUser: '',
             userid: -1,
@@ -55,6 +56,8 @@ export default class Editor extends React.Component {
 
         this.newUsernameInput = React.createRef();
         this.newPasswordInput = React.createRef();
+
+        this.entryTitleInput = React.createRef();
 
         this.libraryInput = React.createRef();
         this.libraryBox = React.createRef();
@@ -151,7 +154,12 @@ export default class Editor extends React.Component {
                 'Content-Type': 'application/json',
             },
         }).then(res => res.json()).then(res => {
-            let entries = res.map(kp => ({ entryid: kp.id, preview: kp.text_preview }));
+            let entries = res.map(kp => ({
+                entryid: kp.id,
+                title: kp.title,
+                timestamp: kp.timestamp,
+                preview: kp.text_preview,
+            }));
 
             this.setState({ entryPreviews: entries });
         });
@@ -259,26 +267,34 @@ export default class Editor extends React.Component {
         }
     }
 
+    saveEntryKeyPress(e) {
+        if (e.key === 'Enter') {
+            this.saveEntry();
+        }
+    }
+
     arenaChannelKeyPress(e) {
         if (e.key === 'Enter') {
             this.arenaChannelImport();
         }
     }
 
-    saveButtonClick() {
+    saveEntry() {
         const userid = this.state.userid;
         const entryid = this.state.entryid;
+
+        // should be a redundant check
         if (this.state.userid !== -1) {
             // TODO: this NEEDS some sort of sanitization to prevent HTML injections
             const rawHTML = this.wordProcessor.current.exportHTML();
 
             if (this.state.entryid === -1) {
                 // create new entry
-                fetch(config.API_ROOT + 'entries/', {
+                fetch(`${config.API_ROOT}entries/`, {
                     method: 'POST',
                     body: JSON.stringify({
                         user_id: this.state.userid,
-                        title: 'placeholder',
+                        title: this.entryTitleInput.current.value,
                         raw_html: rawHTML,
                     }),
                     headers: {
@@ -294,6 +310,8 @@ export default class Editor extends React.Component {
                 });
             }
             else {
+                // TODO: this whole feature needs to be rethought; it's woefully underengineered
+
                 // update existing entry
                 fetch(config.API_ROOT + 'entries/?user_id=' + userid + '&entry_id=' + entryid, {
                     method: 'PUT',
@@ -309,12 +327,6 @@ export default class Editor extends React.Component {
                     this.setState({ lastSaved: new Date().toLocaleString() });
                 });
             }
-        }
-        else if (this.state.loginClicked) {
-            this.setState({ loginError: true });
-        }
-        else {
-            this.loginButtonClick();
         }
     }
 
@@ -349,6 +361,8 @@ export default class Editor extends React.Component {
     }
 
     closeOtherWindows(newState, currentWindow) {
+        // can we get away with just if (clicked) ?
+
         if (currentWindow !== 'similarities' && this.state.simClicked) {
             newState = Object.assign(newState, this.toggleSimState());
         }
@@ -359,6 +373,18 @@ export default class Editor extends React.Component {
 
         if (currentWindow !== 'explore' && this.state.exploreClicked) {
             newState = Object.assign(newState, this.toggleExploreState());
+        }
+
+        if (this.state.exportClicked) {
+            newState.exportClicked = false;
+        }
+
+        if (this.state.channelClicked) {
+            newState = Object.assign(newState, this.toggleChannelState());
+        }
+
+        if (this.state.saveClicked) {
+            newState = Object.assign(newState, this.toggleSaveState());
         }
 
         return newState;
@@ -403,6 +429,16 @@ export default class Editor extends React.Component {
         }
 
         this.setState(newState);
+    }
+
+    saveButtonClick() {
+        let newState = this.toggleSaveState();
+        newState = this.closeOtherWindows(newState);
+
+        this.setState(newState);
+
+        this.entryTitleInput.current.focus();
+        this.entryTitleInput.current.select();
     }
 
     loginButtonClick() {
@@ -453,7 +489,7 @@ export default class Editor extends React.Component {
         this.arenaChannelInput.current.value = '';
     }
 
-    importChannelClick() {
+    toggleChannelState() {
         let newState = {
             channelClicked: !this.state.channelClicked,
         };
@@ -462,13 +498,24 @@ export default class Editor extends React.Component {
             this.clearImportChannelFields();
         }
 
-        if (this.state.exportClicked) {
-            newState.exportClicked = false;
+        return newState;
+    }
+
+    toggleSaveState() {
+        let newState = {
+            saveClicked: !this.state.saveClicked,
+        };
+
+        if (this.state.saveClicked) {
+            this.entryTitleInput.current.value = '';
         }
 
-        if (this.state.libraryClicked) {
-            newState = Object.assign(this.toggleLibraryState(), newState);
-        }
+        return newState;
+    }
+
+    importChannelClick() {
+        let newState = this.toggleChannelState();
+        newState = this.closeOtherWindows(newState);
 
         this.setState(newState);
     }
@@ -512,7 +559,11 @@ export default class Editor extends React.Component {
     }
 
     createLoginFieldStyles(transitionCond, errorCond) {
-        let styleArray = [styles.loginInputBox, styles.loginInput, styles.loginButton];
+        let styleArray = [ styles.loginInputBox,
+                           styles.loginInput,
+                           styles.loginButton,
+                           styles.fieldHeader ];
+
         let newStyleArray = styleArray.map(style => Object.assign({}, style, styles.transition(transitionCond)));
 
         newStyleArray = newStyleArray.map(style => Object.assign({}, style, { border: 'none' }));
@@ -522,24 +573,41 @@ export default class Editor extends React.Component {
         return newStyleArray;
     }
 
+    addTransition(style, transitionCond) {
+        return Object.assign({}, style, styles.transition(transitionCond));
+    }
+
     // TODO: This function is disgusting looking. Needs to be cleaned.
     //       Some of these can probably be offloaded into other components.
     render() {
+        // not logged in
         const loginCond = this.state.loginClicked && this.state.loggedInUser.length === 0;
         const newUserCond = this.state.newUserClicked && this.state.loggedInUser.length === 0;
+
+        // logged in
+        const saveCond = this.state.saveClicked && this.state.loggedInUser.length > 0;
         const channelCond = this.state.channelClicked && this.state.loggedInUser.length > 0;
         const exportCond = this.state.exportClicked && this.state.loggedInUser.length > 0;
 
         const [ loginInputBox,
                 loginInput,
-                loginButton ] = this.createLoginFieldStyles(loginCond, this.state.loginError);
+                loginButton,
+                loginHeader ] = this.createLoginFieldStyles(loginCond, this.state.loginError);
 
         const [ newUserInputBox,
                 newUserInput,
-                newUserButton ] = this.createLoginFieldStyles(newUserCond, this.state.newUserError);
+                newUserButton,
+                newUserHeader ] = this.createLoginFieldStyles(newUserCond, this.state.newUserError);
+
+        const [ saveInputBox,
+                saveInput,
+                saveButton,
+                saveHeader ] = this.createLoginFieldStyles(saveCond, false);
 
         const [ channelInputBox,
-                channelInput, , ] = this.createLoginFieldStyles(channelCond, this.state.channelError);
+                channelInput,
+                ,
+                channelHeader ] = this.createLoginFieldStyles(channelCond, this.state.channelError);
 
         const [ , , exportButton ] = this.createLoginFieldStyles(exportCond, false);
 
@@ -580,7 +648,8 @@ export default class Editor extends React.Component {
             zIndex: this.state.loginClicked ? 100 : -100,
         };
 
-        const newUserGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.newUserClicked ? 100 : -100, right: '', });
+        const saveGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.saveClicked ? 100 : -100, right: '', });
+        const newUserGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.newUserClicked ? 100 : -100, });
         const channelGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.channelClicked ? 100 : -100, right: '', });
         const exportGroupStyle = Object.assign({}, loginGroupStyle, { zIndex: this.state.exportClicked ? 100 : -100, right: '', });
 
@@ -623,6 +692,7 @@ export default class Editor extends React.Component {
                         { /* LOGIN FIELDS */ }
 
                         <div style={ loginGroupStyle }>
+                            <div style={ loginHeader }>login</div>
                             <div tabIndex="-1" style={ loginInputBox }>
                                 <input type="text" ref={ this.usernameInput } onKeyPress={ this.loginKeyPress.bind(this) } placeholder="username" style={ loginInput } />
                             </div>
@@ -639,6 +709,7 @@ export default class Editor extends React.Component {
                         { /* NEW USER FIELDS */ }
 
                         <div style={ newUserGroupStyle }>
+                            <div style={ newUserHeader }>create new user</div>
                             <div tabIndex="-1" style={ newUserInputBox }>
                                 <input type="text" ref={ this.newUsernameInput } onKeyPress={ this.newUserKeyPress.bind(this) } placeholder="new username" style={ newUserInput } />
                             </div>
@@ -652,9 +723,24 @@ export default class Editor extends React.Component {
 
                         { /* END NEW USER FIELDS */ }
 
+                        { /* SAVE ENTRY FIELDS */ }
+
+                        <div style={ saveGroupStyle }>
+                            <div style={ saveHeader }>save entry</div>
+                            <div tabIndex="-1" style={ saveInputBox }>
+                                <input type="text" ref={ this.entryTitleInput } onKeyPress={ this.saveEntryKeyPress.bind(this) } placeholder="title (optional)" style={ saveInput } />
+                            </div>
+                            <div style={ saveButton } onClick={ this.saveEntry.bind(this) }>
+                                <div style={{ padding: '0.25em 0.5em' }}>></div>
+                            </div>
+                        </div>
+
+                        { /* END SAVE ENTRY FIELDS */ }
+
                         { /* IMPORT FIELDS */ }
 
                         <div style={ channelGroupStyle }>
+                            <div style={ channelHeader }>import are.na channel</div>
                             <span><div tabIndex="-1" style={ channelInputBox }>
                                 <input type="text" ref={ this.arenaChannelInput } onKeyPress={ this.arenaChannelKeyPress.bind(this) } placeholder="are.na channel url" style={ channelInput } />
                             </div></span>

@@ -16,6 +16,11 @@ export const text = {
     fontSize: fontSize,
 };
 
+export const fieldHeader = Object.assign({}, text, {
+    margin: '0 0 -1em 1em',
+    fontWeight: 'bolder',
+});
+
 export const position = {
     zIndex: '3',
     position: 'fixed',
@@ -186,3 +191,4 @@ export const textStyle = {
     fontFamily: fontFamily,
     fontSize: fontSize,
 };
+
