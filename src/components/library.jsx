@@ -116,6 +116,8 @@ export default class Library extends React.Component {
             }
         }).then(res => res.json()).then(res => res.map(r => ({
             entryid: r.id,
+            timestamp: r.timestamp,
+            title: r.title,
             preview: r.text_preview
         }))).then(res => {
             let previews = this.formatEntryList(res);
