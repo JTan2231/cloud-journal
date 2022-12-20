@@ -1,2 +1,1 @@
-# TODO
-Marketing speak for how cool this app is
+Knowledge aggregation platform at https://joeytan.dev
