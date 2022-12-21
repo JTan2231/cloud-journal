@@ -132,13 +132,13 @@ export const caret = {
 export const libraryBaseMath = '2em - 2em - 2.66em - 1em - 1em';
 export const libraryResults = {
     width: '100%',
-    height: `calc(100% - ${libraryBaseMath})`,
+    height: `calc(100% - ${libraryBaseMath} + 1em)`,
     zIndex: 3,
     backgroundColor: 'rgb(25, 25, 28)',
     top: 'calc(50vh - 30%)',
     left: 'calc(100vw - 45%)',
     borderRadius: '0.5em',
-    marginTop: '2em',
+    marginTop: '1em',
 };
 
 export const boxSearch = Object.assign({}, box, {

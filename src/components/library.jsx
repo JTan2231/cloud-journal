@@ -8,7 +8,9 @@ export default class Library extends React.Component {
     constructor(props) {
         super(props);
 
-        this.state = {};
+        this.state = {
+            maximized: false,
+        };
 
         this.marginDefault = 0.5;
         this.paddingDefault = 0.5;
@@ -33,7 +35,7 @@ export default class Library extends React.Component {
         });
     }
 
-    getResultsStyles(margin, padding) {
+    getResultsStyles(margin, padding, maximized) {
         if (margin === null) {
             margin = this.marginDefault;
         }
@@ -42,7 +44,18 @@ export default class Library extends React.Component {
             padding = this.paddingDefault;
         }
 
-        const size = `calc(100% - ${2*margin + 2*padding}em)`;
+        if (maximized === undefined) {
+            maximized = false;
+        }
+
+        let size;
+        if (maximized) {
+            size = `calc(25% - ${2*margin + 2*padding}em)`;
+        }
+        else {
+            size = `calc(100% - ${2*margin + 2*padding}em)`;
+        }
+
         const containerStyle = Object.assign({}, styles.textStyle, {
             borderRadius: '0.5em',
             padding: `${padding}em`,
@@ -66,16 +79,38 @@ export default class Library extends React.Component {
 
         const timestampStyle = Object.assign({}, styles.textStyle, {
             fontSize: '0.8em',
+            margin: '',
         });
 
-        return [ containerStyle, boldStyle, headerStyle, timestampStyle ];
+        const contentStyle = {
+            border: '1px solid rgba(188, 193, 189, 0.43)',
+            borderRadius: '0.5em',
+            padding: '0.5em',
+        };
+
+        return [ containerStyle, boldStyle, headerStyle, timestampStyle, contentStyle ];
     }
 
-    formatEntryList(entries) {
+    isIsoDate(str) {
+        if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str)) return false;
+        const d = new Date(str); 
+        return d instanceof Date && !isNaN(d) && d.toISOString()===str; // valid date 
+    }
+
+    isUnset(title) {
+        return !this.isIsoDate(title) || title === 'untitled' || title === 'placeholder' || title === '';
+    }
+
+    formatEntryList(entries, maximized) {
+        if (maximized === undefined) {
+            maximized = false;
+        }
+
         const [ entryStyle,
                 boldStyle,
                 headerStyle,
-                timestampStyle ] = this.getResultsStyles(null, null);
+                timestampStyle,
+                contentStyle ] = this.getResultsStyles(null, null, maximized);
 
         let processed = [];
         for (var i = 0; i < entries.length; i++) {
@@ -85,20 +120,20 @@ export default class Library extends React.Component {
 
             const timestamp = entries[i].timestamp;
             const id = entries[i].entryid;
-            const title = entries[i].title === 'untitled' ? timestamp.split('T')[1].split('.')[0] : entries[i].title;
+            const title = this.isUnset(entries[i].title) ? timestamp.split('T')[1].split('.')[0] : entries[i].title;
             processed.push(
                 <div class="libraryItem" style={ entryStyle } onClick={ () => this.libraryResultsClick(id) }>
                     <div style={ headerStyle }>
-                        <span style={ boldStyle }>
+                        <div style={ boldStyle }>
                             { title }
-                        </span>
-                        <span style={ timestampStyle }>
+                        </div>
+                        <div style={ timestampStyle }>
                             { timestamp.substr(0, 10) }
-                        </span>
+                        </div>
                     </div>
-                    <span>
+                    <div style={ contentStyle }>
                         <span>{ boldWords }</span> { words }
-                    </span>
+                    </div>
                 </div>
             );
         }
@@ -157,6 +192,15 @@ export default class Library extends React.Component {
     reset() {
         this.setPreviews();
         this.returnToResults();
+        this.setState({ maximized: false, });
+    }
+
+    maximizeClick() {
+        let maxed = !this.state.maximized;
+        this.setState({
+            maximized: maxed,
+            libraryResults: this.formatEntryList(this.props.entryPreviews, maxed),
+        });
     }
 
     render() {
@@ -173,12 +217,12 @@ export default class Library extends React.Component {
             borderRadius: '0.5em',
         };
 
-        const libraryResults = Object.assign({}, styles.libraryResults, {
+        let libraryResults = Object.assign({}, styles.libraryResults, {
             display: this.props.libraryClicked ? '' : 'none',
         });
 
         const boxSearchStyle = Object.assign({}, boxStyle, {
-            margin: '1em',
+            margin: '0.5em 1em',
             transition: '',
             float: '',
             pointerEvents: '',
@@ -203,17 +247,17 @@ export default class Library extends React.Component {
             margin: '0.3em',
         });
 
-        const resultsBoxStyle = Object.assign({}, boxSearchStyle, {
-            height: `calc(100% - ${styles.libraryBaseMath} - 3em - 1em - 2em)`,
+        let resultsBoxStyle = Object.assign({}, boxSearchStyle, {
+            height: `calc(100% - ${styles.libraryBaseMath} - 3em - 1em - 2em - 0.66em + 0.5em)`,
             width: 'calc(100% - 3em',
-            marginTop: '4em',
+            marginTop: '3.5em',
             backgroundColor: 'black',
             padding: '0.5em',
         });
 
         const resultsClickDisplayToggle = this.state.resultsClickDisplay != null;
 
-        let [ resultsClickDisplayStyle, , ] = this.getResultsStyles(null, null);
+        let [ resultsClickDisplayStyle, , , ] = this.getResultsStyles(null, null);
         resultsClickDisplayStyle = Object.assign({}, resultsClickDisplayStyle, {
             height: `calc(100% - ${2*this.marginDefault + 2*this.paddingDefault}em`,
             maxWidth: `calc(100% - ${2*this.marginDefault + 2*this.paddingDefault}em`,
@@ -242,26 +286,78 @@ export default class Library extends React.Component {
             display: resultsClickDisplayToggle ? 'none' : 'flex',
         };
 
-        return (
-            <div style={ libraryResults }>
-                <div style={ boxSearchStyle }>
-                    <input type="text" ref={ this.libraryInput } onKeyPress={ this.libraryKeyPress.bind(this) } placeholder="search through your saved entries" style={ boxInputStyle } />
-                </div>
-                <div style={ resultsBoxStyle }>
-                    <div style={ flexWrapperStyle }>
-                        { this.state.libraryResults }
-                    </div>
+        const minMaxButton = Object.assign({}, goBackButton, {
+            marginLeft: '1rem',
+            lineHeight: '',
+            fontSize: '12px',
+            padding: '0.3em',
+            position: 'relative',
+            top: '0.5rem',
+        });
 
-                    <div style={ resultsClickDisplayToggleStyle }>
-                        <div style={ buttonWrapperStyle }>
-                            <span className="libraryItem" style={ goBackButton } onClick={ this.returnToResults.bind(this) }>go back</span>
-                            <span className="libraryItem" style={ goBackButton } onClick={ () => this.props.libraryClick(this.state.currentEntryId) }>load</span>
+        if (!this.state.maximized) {
+            return (
+                <div style={ libraryResults }>
+                    <div className="libraryItem" style={ minMaxButton } onClick={ this.maximizeClick.bind(this) }>
+                        Maximize
+                    </div>
+                    <div style={ boxSearchStyle }>
+                        <input type="text" ref={ this.libraryInput } onKeyPress={ this.libraryKeyPress.bind(this) } placeholder="search through your saved entries" style={ boxInputStyle } />
+                    </div>
+                    <div style={ resultsBoxStyle }>
+                        <div style={ flexWrapperStyle }>
+                            { this.state.libraryResults }
                         </div>
-                        <div ref={ this.resultsClickDisplay } style={ resultsClickDisplayStyle } dangerouslySetInnerHTML={{ __html: this.state.resultsClickDisplay }}>
+
+                        <div style={ resultsClickDisplayToggleStyle }>
+                            <div style={ buttonWrapperStyle }>
+                                <span className="libraryItem" style={ goBackButton } onClick={ this.returnToResults.bind(this) }>go back</span>
+                                <span className="libraryItem" style={ goBackButton } onClick={ () => this.props.libraryClick(this.state.currentEntryId) }>load</span>
+                            </div>
+                            <div ref={ this.resultsClickDisplay } style={ resultsClickDisplayStyle } dangerouslySetInnerHTML={{ __html: this.state.resultsClickDisplay }}>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        );
+            );
+        }
+        else {
+            libraryResults = Object.assign({}, libraryResults, {
+                position: 'fixed',
+                left: '3em',
+                width: 'calc(100vw - 4em)',
+                top: '',
+                bottom: '1em'
+            });
+
+            resultsBoxStyle = Object.assign({}, resultsBoxStyle, {
+                height: `calc(100% - ${styles.libraryBaseMath} + 1em)`,
+            });
+
+            return (
+                <div style={ libraryResults }>
+                    <div className="libraryItem" style={ minMaxButton } onClick={ this.maximizeClick.bind(this) }>
+                        Minimize
+                    </div>
+                    <div style={ boxSearchStyle }>
+                        <input type="text" ref={ this.libraryInput } onKeyPress={ this.libraryKeyPress.bind(this) } placeholder="search through your saved entries" style={ boxInputStyle } />
+                    </div>
+                    <div style={ resultsBoxStyle }>
+                        <div style={ flexWrapperStyle }>
+                            { this.state.libraryResults }
+                        </div>
+
+                        <div style={ resultsClickDisplayToggleStyle }>
+                            <div style={ buttonWrapperStyle }>
+                                <span className="libraryItem" style={ goBackButton } onClick={ this.returnToResults.bind(this) }>go back</span>
+                                <span className="libraryItem" style={ goBackButton } onClick={ () => this.props.libraryClick(this.state.currentEntryId) }>load</span>
+                            </div>
+                            <div ref={ this.resultsClickDisplay } style={ resultsClickDisplayStyle } dangerouslySetInnerHTML={{ __html: this.state.resultsClickDisplay }}>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
     }
 }

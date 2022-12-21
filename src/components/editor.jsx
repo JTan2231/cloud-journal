@@ -119,7 +119,8 @@ export default class Editor extends React.Component {
         this.clearInputs();
         this.clearImportChannelFields();
         this.wordProcessor.current.clear();
-        this.setState({
+        let newState = this.closeOtherWindows({}, '');
+        this.setState(Object.assign(newState, {
             loggedInUser: '',
             userid: -1,
             loginError: false,
@@ -129,7 +130,7 @@ export default class Editor extends React.Component {
             simResults: [],
             libraryResults: [],
             lastSaved: 'unsaved',
-        });
+        }));
     }
 
     getEntryItemClick(userid, entryid) {
