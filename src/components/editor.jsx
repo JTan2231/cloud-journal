@@ -161,6 +161,7 @@ export default class Editor extends React.Component {
             }));
 
             this.setState({ entryPreviews: entries });
+            this.libraryBox.current.setPreviews();
         });
     }
 
@@ -588,6 +589,16 @@ export default class Editor extends React.Component {
 
         const typingTextValue = this.state.loggedInUser.length > 0 ? 'logged in as ' + this.state.loggedInUser : 'not logged in';
 
+
+        const welcomeProps = {
+            userid: this.state.userid,
+            welcomeShowing: this.state.welcomeShowing,
+            libraryClick: this.libraryButtonClick.bind(this),
+            exploreClick: this.exploreButtonClick.bind(this),
+            loginClick: this.loginButtonClick.bind(this),
+            newUserClick: this.newUserClick.bind(this),
+        };
+
         const libraryProps = {
             userid: this.state.userid,
             entryPreviews: this.state.entryPreviews,
@@ -740,7 +751,7 @@ export default class Editor extends React.Component {
 
                         { /* END EXPORT FIELDS */ }
 
-                        <WelcomeBox welcomeShowing={ this.state.welcomeShowing } />
+                        <WelcomeBox { ...welcomeProps } />
                         <Library ref={ this.libraryBox } { ...libraryProps } />
                         <Explore ref={ this.explore } { ...exploreProps } />
 

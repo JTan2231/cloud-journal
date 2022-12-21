@@ -6,11 +6,39 @@ export default class WelcomeBox extends React.Component {
     constructor(props) {
         super(props);
 
+        this.actionTextStyle = {
+            marginTop: '1em',
+        };
+
+        this.defaultActionText = (
+            <div style={ this.actionTextStyle }>
+                <span className="menuItem" onClick={ this.props.loginClick }><u>Login</u> </span>
+                or 
+                <span className="menuItem" onClick={ this.props.newUserClick }> <u>create a new user</u> </span>
+                to get started.
+            </div>
+        );
+
         this.state = {
+            actionText: this.defaultActionText,
         };
 
         this.marginDefault = 0.5;
         this.paddingDefault = 0.5;
+    }
+
+    getActionText(userid) {
+        if (userid === -1) {
+            return this.defaultActionText;
+        }
+        else {
+            return (
+                <ul>
+                    <li>Use the <u className="menuItem" onClick={ this.props.libraryClick }>library</u> to look through your saved entries</li>
+                    <li>Click <u className="menuItem" onClick={ this.props.exploreClick }>explore</u> to see what others are saving</li>
+                </ul>
+            );
+        }
     }
 
     render() {
@@ -47,10 +75,7 @@ export default class WelcomeBox extends React.Component {
                         <div>
                             AI-assisted knowledge indexing and organization.
                         </div>
-                        <ul>
-                            <li>Use the <u>library</u> to look through your saved entries</li>
-                            <li>Use <u>explore</u> to see what others are posting</li>
-                        </ul>
+                        { this.getActionText(this.props.userid) }
                     </div>
                 </div>
             </div>
