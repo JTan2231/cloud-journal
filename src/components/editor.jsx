@@ -172,7 +172,12 @@ export default class Editor extends React.Component {
                 'Content-Type': 'application/json',
             },
         }).then(res => res.json()).then(res => {
-            let entries = res.map(kp => ({ entryid: kp.id, preview: kp.text_preview }));
+            let entries = res.map(kp => ({
+                entryid: kp.id,
+                title: kp.title,
+                timestamp: kp.timestamp,
+                preview: kp.text_preview
+            }));
 
             this.setState({ latestEntryPreviews: entries });
         });
