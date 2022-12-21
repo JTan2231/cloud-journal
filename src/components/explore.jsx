@@ -134,7 +134,7 @@ export default class Explore extends React.Component {
                         </div>
                     </div>
                     <div style={ styleObject.contentStyle }>
-                        <span style={ styleObject.boldStyle }>{ boldWords }</span> { words }
+                        <span>{ boldWords }</span> { words }
                     </div>
                 </div>
             );
