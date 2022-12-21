@@ -44,7 +44,7 @@ export const options = Object.assign({
     cursor: 'default',
     display: 'flex',
     flexWrap: 'wrap',
-    maxWidth: '30em',
+    width: '30em',
     justifyContent: 'center',
 }, box);
 
@@ -165,24 +165,6 @@ export const resultsBox = Object.assign({}, boxSearch, {
     height: 'calc(100% - 5em)',
     marginTop: '4em',
     overflowY: 'auto',
-});
-
-export const boxSimResults = Object.assign({}, boxSearch, {
-    height: `calc(100% - ${libraryBaseMath} - 1em - 1em)`,
-    width: '25%',
-    backgroundColor: 'transparent',
-});
-
-export const simResultsBox = Object.assign({}, resultsBox, {
-    margin: '1em',
-    marginTop: '1em',
-    left: 'calc(25% + 1em)',
-    width: 'calc(75% - 4em)',
-    height: `calc(100% - ${libraryBaseMath} - 1em - 2em)`,
-    backgroundColor: 'black',
-    display: 'flex',
-    flexWrap: 'wrap',
-    padding: '0.5em',
 });
 
 export const textStyle = {

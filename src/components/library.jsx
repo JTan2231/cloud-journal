@@ -155,7 +155,7 @@ export default class Library extends React.Component {
             title: r.title,
             preview: r.text_preview
         }))).then(res => {
-            let previews = this.formatEntryList(res);
+            let previews = this.formatEntryList(res, this.state.maximized);
             
             if (previews.length === 0) {
                 previews = [this.libraryDefault];

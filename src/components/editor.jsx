@@ -4,8 +4,8 @@ import React from 'react';
 import WordProcessor from './word_processor.jsx';
 import TypingText from './typing_text.jsx';
 
+import WelcomeBox from './welcome_box.jsx';
 import Library from './library.jsx';
-import Similarities from './similarities.jsx';
 import Explore from './explore.jsx';
 
 import '../styles/menu_item.css';
@@ -40,7 +40,7 @@ export default class Editor extends React.Component {
             latestEntryPreviews: [],
             simResults: [],
             entryIdMap: new Map(),
-            mounted: false,
+            welcomeShowing: true,
         };
 
         this.setWordProcessorFromLibrary = (entryid) => {
@@ -61,8 +61,6 @@ export default class Editor extends React.Component {
 
         this.libraryInput = React.createRef();
         this.libraryBox = React.createRef();
-
-        this.simBox = React.createRef();
 
         this.explore = React.createRef();
 
@@ -350,23 +348,8 @@ export default class Editor extends React.Component {
         return { exploreClicked: !this.state.exploreClicked, };
     }
 
-    toggleSimState() {
-        if (this.state.simClicked) {
-            this.simBox.current.reset();
-        }
-
-        return {
-            simClicked: !this.state.simClicked,
-            simResults: this.state.simClicked ? [] : this.state.simResults
-        };
-    }
-
     closeOtherWindows(newState, currentWindow) {
         // can we get away with just if (clicked) ?
-
-        if (currentWindow !== 'similarities' && this.state.simClicked) {
-            newState = Object.assign(newState, this.toggleSimState());
-        }
 
         if (currentWindow !== 'library' && this.state.libraryClicked) {
             newState = Object.assign(newState, this.toggleLibraryState());
@@ -387,6 +370,8 @@ export default class Editor extends React.Component {
         if (this.state.saveClicked) {
             newState = Object.assign(newState, this.toggleSaveState());
         }
+
+        newState.welcomeShowing = !(newState.libraryClicked || newState.exploreClicked);
 
         return newState;
     }
@@ -416,17 +401,6 @@ export default class Editor extends React.Component {
 
         if (this.state.channelClicked) {
             newState.channelClicked = false;
-        }
-
-        this.setState(newState);
-    }
-
-    simButtonClick() {
-        let newState = this.toggleSimState();
-        newState = this.closeOtherWindows(newState, 'similarities');
-
-        if (!this.state.simClicked) {
-            this.getUserEntries(this.state.userid)
         }
 
         this.setState(newState);
@@ -684,7 +658,6 @@ export default class Editor extends React.Component {
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.libraryButtonClick.bind(this) }>library</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.exploreButtonClick.bind(this) }>explore</span>
-                            <span class="menuItem" style={ loggedInStyles } onClick={ this.simButtonClick.bind(this) }>similarities</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.importChannelClick.bind(this) }>import</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.exportButtonClick.bind(this) }>export</span>
                         </div>
@@ -767,9 +740,8 @@ export default class Editor extends React.Component {
 
                         { /* END EXPORT FIELDS */ }
 
-
+                        <WelcomeBox welcomeShowing={ this.state.welcomeShowing } />
                         <Library ref={ this.libraryBox } { ...libraryProps } />
-                        <Similarities ref={ this.simBox } { ...similarityProps } />
                         <Explore ref={ this.explore } { ...exploreProps } />
 
                     </div>
