@@ -7,6 +7,7 @@ import TypingText from './typing_text.jsx';
 import WelcomeBox from './welcome_box.jsx';
 import Library from './library.jsx';
 import Explore from './explore.jsx';
+import Collections from './collections.jsx';
 
 import '../styles/menu_item.css';
 import '../styles/library_item.css';
@@ -23,6 +24,7 @@ export default class Editor extends React.Component {
             newUserClicked: false,
             simClicked: false,
             exploreClicked: false,
+            collectionsClicked: false,
             channelClicked: false,
             exportClicked: false,
             saveClicked: false,
@@ -64,6 +66,8 @@ export default class Editor extends React.Component {
 
         this.explore = React.createRef();
 
+        this.collections = React.createRef();
+
         this.arenaChannelInput = React.createRef();
         this.importStatus = React.createRef();
     }
@@ -103,8 +107,10 @@ export default class Editor extends React.Component {
                     loginClicked: false,
                 });
 
+                // TODO: use await Promise.all([]) here
                 this.getUserEntries(res.user_id);
                 this.getLatestEntries(res.user_id);
+                this.getCollections(res.user_id);
                 this.clearInputs();
             }
             else if (res.errors) {
@@ -180,6 +186,17 @@ export default class Editor extends React.Component {
             }));
 
             this.setState({ latestEntryPreviews: entries });
+        });
+    }
+
+    getCollections(userid) {
+        fetch(`${config.API_ROOT}collections/?user_id=${userid}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }).then(res => res.json()).then(res => {
+            this.setState({ collections: res });
         });
     }
 
@@ -365,6 +382,10 @@ export default class Editor extends React.Component {
             newState = Object.assign(newState, this.toggleExploreState());
         }
 
+        if (this.state.collectionsClicked) {
+            newState = Object.assign(newState, this.toggleCollectionsState);
+        }
+
         if (this.state.exportClicked) {
             newState.exportClicked = false;
         }
@@ -377,7 +398,9 @@ export default class Editor extends React.Component {
             newState = Object.assign(newState, this.toggleSaveState());
         }
 
-        newState.welcomeShowing = !(newState.libraryClicked || newState.exploreClicked);
+        newState.welcomeShowing = !(newState.libraryClicked ||
+                                    newState.exploreClicked ||
+                                    newState.collectionsClicked);
 
         return newState;
     }
@@ -408,6 +431,28 @@ export default class Editor extends React.Component {
         if (this.state.channelClicked) {
             newState.channelClicked = false;
         }
+
+        this.setState(newState);
+    }
+
+    toggleCollectionsState() {
+        let newState = {
+            collectionsClicked: !this.state.collectionsClicked,
+        };
+
+        if (this.state.collectionsClicked) {
+            this.collections.current.reset();
+        }
+        else {
+            this.collections.current.setPreviews();
+        }
+
+        return newState;
+    }
+
+    collectionsButtonClick() {
+        let newState = this.toggleCollectionsState();
+        newState = this.closeOtherWindows(newState);
 
         this.setState(newState);
     }
@@ -611,6 +656,14 @@ export default class Editor extends React.Component {
             libraryClick: this.setWordProcessorFromLibrary,
         };
 
+        const collectionsProps = {
+            userid: this.state.userid,
+            entryPreviews: this.state.entryPreviews,
+            collections: this.state.collections,
+            collectionsClicked: this.state.collectionsClicked,
+            refreshCollectionList: this.getCollections,
+        };
+
         const similarityProps = {
             userid: this.state.userid,
             clicked: this.state.simClicked,
@@ -674,6 +727,7 @@ export default class Editor extends React.Component {
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.libraryButtonClick.bind(this) }>library</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.exploreButtonClick.bind(this) }>explore</span>
+                            <span class="menuItem" style={ loggedInStyles } onClick={ this.collectionsButtonClick.bind(this) }>collections</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.importChannelClick.bind(this) }>import</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.exportButtonClick.bind(this) }>export</span>
                         </div>
@@ -759,6 +813,7 @@ export default class Editor extends React.Component {
                         <WelcomeBox { ...welcomeProps } />
                         <Library ref={ this.libraryBox } { ...libraryProps } />
                         <Explore ref={ this.explore } { ...exploreProps } />
+                        <Collections ref={ this.collections } { ...collectionsProps } />
 
                     </div>
 

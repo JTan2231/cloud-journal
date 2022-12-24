@@ -234,7 +234,7 @@ export default class Library extends React.Component {
             border: 'none',
         });
 
-        const boxInputStyle = Object.assign({}, {
+        const boxInputStyle = {
             width: '100%',
             padding: '0.25em 0.5em',
             color: menuTextColor,
@@ -245,7 +245,7 @@ export default class Library extends React.Component {
             pointerEvents: '',
             border: 'none',
             margin: '0.3em',
-        });
+        };
 
         let resultsBoxStyle = Object.assign({}, boxSearchStyle, {
             height: `calc(100% - ${styles.libraryBaseMath} - 3em - 1em - 2em - 0.66em + 0.5em)`,
