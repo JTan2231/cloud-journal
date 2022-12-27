@@ -11,12 +11,15 @@ export default class WelcomeBox extends React.Component {
         };
 
         this.defaultActionText = (
-            <div style={ this.actionTextStyle }>
-                <span className="menuItem" onClick={ this.props.loginClick }><u>Login</u> </span>
-                or 
-                <span className="menuItem" onClick={ this.props.newUserClick }> <u>create a new user</u> </span>
-                to get started.
-            </div>
+            <>
+                <div style={ this.actionTextStyle }>
+                    An automated tool for saving and organizing your notes.
+                    <span className="menuItem" onClick={ this.props.loginClick }> <u>Login</u> </span>
+                    or 
+                    <span className="menuItem" onClick={ this.props.newUserClick }> <u>create a new user</u> </span>
+                    to get started.
+                </div>
+            </>
         );
 
         this.state = {
@@ -35,7 +38,7 @@ export default class WelcomeBox extends React.Component {
             return (
                 <ul>
                     <li>Use the <u className="menuItem" onClick={ this.props.libraryClick }>library</u> to look through your saved entries</li>
-                    <li>Click <u className="menuItem" onClick={ this.props.exploreClick }>explore</u> to see what others are saving</li>
+                    <li>Click <u className="menuItem" onClick={ this.props.collectionsClick }>collections</u> to create and view your generated collections of entries</li>
                 </ul>
             );
         }

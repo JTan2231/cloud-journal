@@ -38,6 +38,7 @@ export default class Editor extends React.Component {
             lastSaved: 'unsaved',
             libraryClicked: false,
             libraryResults: [],
+            collections: [],
             entryPreviews: [],
             latestEntryPreviews: [],
             simResults: [],
@@ -45,8 +46,10 @@ export default class Editor extends React.Component {
             welcomeShowing: true,
         };
 
-        this.setWordProcessorFromLibrary = (entryid) => {
-            this.getEntryItemClick(this.state.userid, entryid);
+        this.authToken = '';
+
+        this.deleteEntryWrapper = (entryid) => {
+            this.deleteEntry(this.state.userid, entryid);
         };
 
         this.wordProcessor = React.createRef();
@@ -76,6 +79,13 @@ export default class Editor extends React.Component {
         this.wordProcessor.current.clear();
     }
 
+    getDefaultHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            Authorization: `Token ${this.authToken}`,
+        }
+    }
+
     clearInputs() {
         this.usernameInput.current.value = '';
         this.passwordInput.current.value = '';
@@ -89,7 +99,7 @@ export default class Editor extends React.Component {
 
     userLoginAttempt() {
         const username = this.usernameInput.current.value;
-        fetch(config.API_ROOT + 'authentication/', {
+        fetch(config.API_ROOT + 'login/', {
             method: 'POST',
             body: JSON.stringify({
                 username: username,
@@ -99,7 +109,8 @@ export default class Editor extends React.Component {
                 'Content-Type': 'application/json',
             }
         }).then(res => res.json()).then(res => {
-            if (res.authenticated) {
+            if (res.token) {
+                console.log(res);
                 this.setState({
                     loggedInUser: username,
                     userid: res.user_id,
@@ -107,14 +118,20 @@ export default class Editor extends React.Component {
                     loginClicked: false,
                 });
 
-                // TODO: use await Promise.all([]) here
-                this.getUserEntries(res.user_id);
-                this.getLatestEntries(res.user_id);
-                this.getCollections(res.user_id);
-                this.clearInputs();
+                this.authToken = res.token;
             }
             else if (res.errors) {
                 this.setState({ loginError: true });
+            }
+
+            return res;
+        }).then(res => {
+            if (res.token) {
+                // TODO: use await Promise.all([]) here
+                this.getUserEntries(res.user_id);
+                //this.getLatestEntries(res.user_id);
+                this.getCollections(res.user_id);
+                this.clearInputs();
             }
         });
     }
@@ -123,26 +140,31 @@ export default class Editor extends React.Component {
         this.clearInputs();
         this.clearImportChannelFields();
         this.wordProcessor.current.clear();
-        let newState = this.closeOtherWindows({}, '');
-        this.setState(Object.assign(newState, {
-            loggedInUser: '',
-            userid: -1,
-            loginError: false,
-            libraryClicked: false,
-            simClicked: false,
-            channelClicked: false,
-            simResults: [],
-            libraryResults: [],
-            lastSaved: 'unsaved',
-        }));
+
+        fetch(`${config.API_ROOT}logout/`, {
+            method: 'POST',
+            headers: this.getDefaultHeaders(),
+        }).then(res => {
+            this.authToken = '';
+            let newState = this.closeOtherWindows({}, '');
+            this.setState(Object.assign(newState, {
+                loggedInUser: '',
+                userid: -1,
+                loginError: false,
+                libraryClicked: false,
+                collectionsClicked: false,
+                channelClicked: false,
+                simResults: [],
+                libraryResults: [],
+                lastSaved: 'unsaved',
+            }));
+        });
     }
 
     getEntryItemClick(userid, entryid) {
         fetch(`${config.API_ROOT}entries/?user_id=${userid}&id=${entryid}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: this.getDefaultHeaders(),
         }).then(res => res.json()).then(res => {
             this.wordProcessor.current.clear();
             this.wordProcessor.current.loadHTML(res);
@@ -155,9 +177,7 @@ export default class Editor extends React.Component {
     getUserEntries(userid) {
         fetch(config.API_ROOT + 'entries/?user_id=' + userid, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: this.getDefaultHeaders(),
         }).then(res => res.json()).then(res => {
             let entries = res.map(kp => ({
                 entryid: kp.id,
@@ -174,9 +194,7 @@ export default class Editor extends React.Component {
     getLatestEntries(userid) {
         fetch(`${config.API_ROOT}explore/?user_id=${userid}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: this.getDefaultHeaders(),
         }).then(res => res.json()).then(res => {
             let entries = res.map(kp => ({
                 entryid: kp.id,
@@ -190,29 +208,30 @@ export default class Editor extends React.Component {
     }
 
     getCollections(userid) {
-        fetch(`${config.API_ROOT}collections/?user_id=${userid}`, {
+        return fetch(`${config.API_ROOT}collections/?user_id=${userid}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: this.getDefaultHeaders(),
         }).then(res => res.json()).then(res => {
             this.setState({ collections: res });
+            this.collections.current.setPreviews(res);
         });
     }
 
     createUserAttempt() {
-        fetch(config.API_ROOT + 'users/', {
+        fetch(config.API_ROOT + 'createuser/', {
             method: 'POST',
             body: JSON.stringify({
                 username: this.newUsernameInput.current.value,
                 password: this.newPasswordInput.current.value,
             }),
-            headers: {    
-                'Content-Type': 'application/json',
-            }
+            headers: this.getDefaultHeaders(),
         }).then(res => res.json()).then(res => {
             if (res.errors) {
-                this.setState({ newUserError: true });
+                this.setState({
+                    newUserError: true,
+                    loggedInUser: '',
+                    userid: -1,
+                });
             }
             else {
                 this.setState({
@@ -256,9 +275,7 @@ export default class Editor extends React.Component {
                 user_id: this.state.userid,
                 channel: channel,
             }),
-            headers: {
-                'Content-Type': 'application/json',
-            }
+            headers: this.getDefaultHeaders(),
         }).then(res => res.json()).then(res => {
             if (res.errors) {
                 this.setState({ importStatus: 'error' });
@@ -319,9 +336,7 @@ export default class Editor extends React.Component {
                         title: this.entryTitleInput.current.value,
                         raw_html: rawHTML,
                     }),
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+                    headers: this.getDefaultHeaders(),
                 }).then(res => res.json()).then(res => {
                     // TODO: Make this happen with the initial request
                     this.getUserEntries(this.state.userid);
@@ -340,9 +355,7 @@ export default class Editor extends React.Component {
                     body: JSON.stringify({
                         raw_html: rawHTML,
                     }),
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+                    headers: this.getDefaultHeaders(),
                 }).then(res => {
                     // TODO: Make this happen with the initial request
                     this.getUserEntries(this.state.userid);
@@ -382,8 +395,8 @@ export default class Editor extends React.Component {
             newState = Object.assign(newState, this.toggleExploreState());
         }
 
-        if (this.state.collectionsClicked) {
-            newState = Object.assign(newState, this.toggleCollectionsState);
+        if (currentWindow !== 'collections' && this.state.collectionsClicked) {
+            newState = Object.assign(newState, this.toggleCollectionsState());
         }
 
         if (this.state.exportClicked) {
@@ -438,6 +451,7 @@ export default class Editor extends React.Component {
     toggleCollectionsState() {
         let newState = {
             collectionsClicked: !this.state.collectionsClicked,
+            collections: this.state.collections,
         };
 
         if (this.state.collectionsClicked) {
@@ -452,7 +466,11 @@ export default class Editor extends React.Component {
 
     collectionsButtonClick() {
         let newState = this.toggleCollectionsState();
-        newState = this.closeOtherWindows(newState);
+        newState = this.closeOtherWindows(newState, 'collections');
+
+        if (!this.state.collectionsClicked) {
+            this.collections.current.setPreviews();
+        }
 
         this.setState(newState);
     }
@@ -551,6 +569,8 @@ export default class Editor extends React.Component {
             exportClicked: !this.state.exportClicked,
         };
 
+        newState = this.closeOtherWindows(newState);
+
         if (this.state.channelClicked) {
             newState.channelClicked = false;
             this.clearImportChannelFields();
@@ -576,7 +596,7 @@ export default class Editor extends React.Component {
             anchor.href = file;
 
             let date = new Date();
-            anchor.download = this.state.loggedInUser + '_' + date.toLocaleDateString() + '.zip';// + date.getMonth() + date.getDay() + date.getFullYear() + '.zip';
+            anchor.download = this.state.loggedInUser + '_' + date.toLocaleDateString() + '.zip';
 
             document.body.appendChild(anchor);
             anchor.click();
@@ -642,36 +662,41 @@ export default class Editor extends React.Component {
 
         const welcomeProps = {
             userid: this.state.userid,
+            authToken: this.authToken,
             welcomeShowing: this.state.welcomeShowing,
             libraryClick: this.libraryButtonClick.bind(this),
-            exploreClick: this.exploreButtonClick.bind(this),
+            collectionsClick: this.collectionsButtonClick.bind(this),
             loginClick: this.loginButtonClick.bind(this),
             newUserClick: this.newUserClick.bind(this),
         };
 
         const libraryProps = {
             userid: this.state.userid,
+            authToken: this.authToken,
             entryPreviews: this.state.entryPreviews,
             libraryClicked: this.state.libraryClicked,
-            libraryClick: this.setWordProcessorFromLibrary,
+            deleteEntry: this.setWordProcessorFromLibrary,
         };
 
         const collectionsProps = {
             userid: this.state.userid,
+            authToken: this.authToken,
             entryPreviews: this.state.entryPreviews,
             collections: this.state.collections,
             collectionsClicked: this.state.collectionsClicked,
-            refreshCollectionList: this.getCollections,
+            refreshCollectionList: (cid) => this.getCollections(cid),
         };
 
         const similarityProps = {
             userid: this.state.userid,
+            authToken: this.authToken,
             clicked: this.state.simClicked,
             entryPreviews: this.state.entryPreviews,
             setWordProcessor: this.setWordProcessorFromLibrary,
         };
 
         const exploreProps = {
+            authToken: this.authToken,
             exploreClicked: this.state.exploreClicked,
             entryPreviews: this.state.latestEntryPreviews,
         };
@@ -726,7 +751,6 @@ export default class Editor extends React.Component {
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.newEntryClick.bind(this) }>new entry</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.saveButtonClick.bind(this) }>save</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.libraryButtonClick.bind(this) }>library</span>
-                            <span class="menuItem" style={ loggedInStyles } onClick={ this.exploreButtonClick.bind(this) }>explore</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.collectionsButtonClick.bind(this) }>collections</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.importChannelClick.bind(this) }>import</span>
                             <span class="menuItem" style={ loggedInStyles } onClick={ this.exportButtonClick.bind(this) }>export</span>
@@ -812,7 +836,7 @@ export default class Editor extends React.Component {
 
                         <WelcomeBox { ...welcomeProps } />
                         <Library ref={ this.libraryBox } { ...libraryProps } />
-                        <Explore ref={ this.explore } { ...exploreProps } />
+                        { /* <Explore ref={ this.explore } { ...exploreProps } /> */ }
                         <Collections ref={ this.collections } { ...collectionsProps } />
 
                     </div>

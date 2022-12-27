@@ -26,6 +26,7 @@ export default class Library extends React.Component {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Token ${this.props.authToken}`,
             },
         }).then(res => res.json()).then(res => {
             this.setState({
@@ -148,6 +149,7 @@ export default class Library extends React.Component {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Token ${this.props.authToken}`,
             }
         }).then(res => res.json()).then(res => res.map(r => ({
             entryid: r.id,
@@ -192,6 +194,7 @@ export default class Library extends React.Component {
     reset() {
         this.setPreviews();
         this.returnToResults();
+        this.libraryInput.current.value = '';
         this.setState({ maximized: false, });
     }
 
@@ -299,7 +302,7 @@ export default class Library extends React.Component {
             return (
                 <div style={ libraryResults }>
                     <div className="libraryItem" style={ minMaxButton } onClick={ this.maximizeClick.bind(this) }>
-                        Maximize
+                        maximize
                     </div>
                     <div style={ boxSearchStyle }>
                         <input type="text" ref={ this.libraryInput } onKeyPress={ this.libraryKeyPress.bind(this) } placeholder="search through your saved entries" style={ boxInputStyle } />
@@ -337,7 +340,7 @@ export default class Library extends React.Component {
             return (
                 <div style={ libraryResults }>
                     <div className="libraryItem" style={ minMaxButton } onClick={ this.maximizeClick.bind(this) }>
-                        Minimize
+                        minimize
                     </div>
                     <div style={ boxSearchStyle }>
                         <input type="text" ref={ this.libraryInput } onKeyPress={ this.libraryKeyPress.bind(this) } placeholder="search through your saved entries" style={ boxInputStyle } />
@@ -350,7 +353,7 @@ export default class Library extends React.Component {
                         <div style={ resultsClickDisplayToggleStyle }>
                             <div style={ buttonWrapperStyle }>
                                 <span className="libraryItem" style={ goBackButton } onClick={ this.returnToResults.bind(this) }>go back</span>
-                                <span className="libraryItem" style={ goBackButton } onClick={ () => this.props.libraryClick(this.state.currentEntryId) }>load</span>
+                                <span className="libraryItem" style={ goBackButton } onClick={ () => this.props.deleteEntry(this.state.currentEntryId) }>delete</span>
                             </div>
                             <div ref={ this.resultsClickDisplay } style={ resultsClickDisplayStyle } dangerouslySetInnerHTML={{ __html: this.state.resultsClickDisplay }}>
                             </div>

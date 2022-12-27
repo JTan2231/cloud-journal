@@ -36,10 +36,12 @@ export default class Collections extends React.Component {
             }),
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Token ${this.props.authToken}`,
             },
         }).then(res => res.json()).then(res => {
-            this.props.refreshCollectionsList();
+            this.props.refreshCollectionList(this.props.userid);
             this.backToRoot();
+            this.setPreviews();
         });
     }
 
@@ -48,6 +50,7 @@ export default class Collections extends React.Component {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Token ${this.props.authToken}`,
             },
         }).then(res => res.json()).then(res => {
             this.setState({
@@ -61,6 +64,7 @@ export default class Collections extends React.Component {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Token ${this.props.authToken}`,
             },
         }).then(res => res.json()).then(res => {
             res = res.map(r => ({
@@ -135,9 +139,9 @@ export default class Collections extends React.Component {
     }
 
     isIsoDate(str) {
-        if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str)) return false;
-        const d = new Date(str); 
-        return d instanceof Date && !isNaN(d) && d.toISOString()===str; // valid date 
+        const regex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/;
+
+        return regex.test(str);
     }
 
     isUnset(title) {
@@ -146,7 +150,8 @@ export default class Collections extends React.Component {
 
     formatTitle(title, timestamp) {
         if (this.isUnset(title)) {
-            return timestamp.split('T')[1].split('.')[0];
+            let split = timestamp.split('T');
+            return `${split[0]} ${split[1].split('.')[0]}`;
         }
 
         return title;
@@ -221,7 +226,7 @@ export default class Collections extends React.Component {
             const id = collections[i].collection_id;
             const title = this.formatTitle(collections[i].title, timestamp);
             processed.push(
-                <div class="libraryItem" style={ collectionsStyle } onClick={ () => this.collectionClick(id, title) }>
+                <div className="libraryItem" style={ collectionsStyle } onClick={ () => this.collectionClick(id, title) }>
                     <div style={ headerStyle }>
                         <div style={ boldStyle }>
                             { title }
@@ -237,9 +242,11 @@ export default class Collections extends React.Component {
         return processed;
     }
 
-    setPreviews() {
+    setPreviews(collec=null) {
         let entries = [];
-        let collections = this.formatCollectionsList(this.props.collections, this.state.maximized);
+
+        let c = collec !== null ? collec : this.props.collections;
+        let collections = this.formatCollectionsList(c, this.state.maximized);
 
         this.setState({ userEntries: entries, collections: collections });
     }
@@ -275,10 +282,12 @@ export default class Collections extends React.Component {
             collectionClicked: '',
             selectedEntryid: -1, 
             selectedEntryIdx: -1,
+            entryDisplay: null,
         });
     }
 
     backToRoot() {
+        this.newCollectionName.current.value = '';
         this.setState({
             createButtonClicked: false,
             collectionClicked: '',
@@ -297,6 +306,10 @@ export default class Collections extends React.Component {
     }
 
     getButton(buttonStyle, text='', clickFunction=null) {
+        if (clickFunction === null && this.state.entryDisplay != null) {
+            clickFunction = (() => this.setState({ entryDisplay: null })).bind(this);
+        }
+
         if (this.state.entryDisplay != null || this.state.createButtonClicked || this.state.collectionClicked) {
             text = text === '' ? 'go back' : text;
             clickFunction = clickFunction === null ? this.backToRoot.bind(this) : clickFunction;
@@ -539,7 +552,12 @@ export default class Collections extends React.Component {
             });
 
             resultsBoxStyle = Object.assign({}, resultsBoxStyle, {
-                height: `calc(100% - ${styles.libraryBaseMath} + 1em)`,
+                height: `calc(100% - ${styles.libraryBaseMath} + 1em - 3.33em)`,
+            });
+
+            entryDisplayStyle = Object.assign({}, entryDisplayStyle, {
+                width: '50%',
+                margin: '0.5em auto',
             });
 
             return (
