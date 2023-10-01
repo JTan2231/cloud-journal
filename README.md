@@ -1,1 +1,3 @@
-Knowledge aggregation platform at https://joeytan.dev
+~Knowledge aggregation platform at https://joeytan.dev~
+
+Earliest iteration of Eidetic
